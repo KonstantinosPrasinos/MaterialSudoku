@@ -24,12 +24,16 @@ fun ActionButtons(
     toggleEditing: () -> Unit,
     eraseTile: () -> Unit,
     undoLastAction: () -> Unit,
+    canUndo: Boolean,
+    generateHint: () -> Unit,
+    canGenerateHint: Boolean
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         FilledTonalIconButton(
             onClick = { undoLastAction() },
             shapes = IconButtonDefaults.shapes(),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            enabled = canUndo
         ) {
             Icon(imageVector = Icons.AutoMirrored.Default.Undo, contentDescription = "")
         }
@@ -44,9 +48,10 @@ fun ActionButtons(
             )
         }
         FilledTonalIconButton(
-            onClick = {},
+            onClick = { generateHint() },
             shapes = IconButtonDefaults.shapes(),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            enabled = canGenerateHint
         ) {
             Icon(
                 imageVector = Icons.Default.Lightbulb,

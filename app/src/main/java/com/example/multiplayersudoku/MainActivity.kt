@@ -13,6 +13,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +28,9 @@ import com.example.multiplayersudoku.components.NumberButtons
 import com.example.multiplayersudoku.components.SudokuBoard
 import com.example.multiplayersudoku.components.SudokuTopAppBar
 import com.example.multiplayersudoku.ui.theme.MultiplayerSudokuTheme
+import com.example.multiplayersudoku.utils.AttemptSolve
+
+val maxHints = 3;
 
 class MainActivity : ComponentActivity() {
     val initialBoardValues = listOf(
@@ -68,8 +72,47 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 val undoableActions = remember { mutableStateListOf<SudokuTileData>() }
-
+                var hints by remember { mutableIntStateOf(0) }
+                var mistakes by remember { mutableIntStateOf(0) }
                 fun addToUndoableActions(action: SudokuTileData) = undoableActions.add(action)
+
+                fun generateHint() {
+                    if (hints >= maxHints) return;
+                    if (selectedTileIndices[0] == null || selectedTileIndices[1] == null) return
+
+                    val row: Int = selectedTileIndices[0]!!
+                    val col: Int = selectedTileIndices[1]!!
+
+                    var tileToUpdate = sudokuBoard.board[row][col]
+
+                    if (!tileToUpdate.isEditable) return
+                    if (tileToUpdate.value != null && !tileToUpdate.isMistake) return
+
+                    hints = hints + 1
+
+                    val newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
+                    tileToUpdate = newBoard[row][col]
+
+                    for (i in 1..9) {
+                        newBoard[row][col] = tileToUpdate.copy(value = i)
+
+                        if (AttemptSolve(newBoard)) {
+                            sudokuBoard = sudokuBoard.copy(
+                                board = newBoard.map { it }
+                            )
+                            return
+                        }
+                    }
+                }
+
+                fun checkForMistakes(number: Int, row: Int, col: Int): Boolean {
+                    val newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
+                    val tileToUpdate = newBoard[row][col]
+
+                    // Place the value in the field and test
+                    newBoard[row][col] = tileToUpdate.copy(value = number)
+                    return !AttemptSolve(newBoard)
+                }
 
                 fun eraseSelectedTile() {
                     val row: Int? = selectedTileIndices[0]
@@ -143,8 +186,15 @@ class MainActivity : ComponentActivity() {
                         newBoard[row][col] =
                             tileToUpdate.copy(notes = newNotes)
                     } else {
-                        // Logic for updating the main value
-                        newBoard[row][col] = tileToUpdate.copy(value = number)
+                        // Check if the set value is a mistake
+                        val isMistake = checkForMistakes(number, row, col)
+
+                        if (isMistake) {
+                            mistakes = mistakes + 1;
+                        }
+
+                        newBoard[row][col] =
+                            tileToUpdate.copy(value = number, isMistake = isMistake)
 
                         // Add setting value to undoable actions
                         addToUndoableActions(tileToUpdate)
@@ -195,7 +245,7 @@ class MainActivity : ComponentActivity() {
                             .padding(horizontal = 10.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        InfoBar()
+                        InfoBar(hints = hints, mistakes = mistakes)
                         SudokuBoard(
                             boardData = sudokuBoard,
                             selectedTileIndices = selectedTileIndices,
@@ -209,6 +259,9 @@ class MainActivity : ComponentActivity() {
                             toggleEditing = { isWritingNotes = !isWritingNotes },
                             eraseTile = ::eraseSelectedTile,
                             undoLastAction = ::undoLastAction,
+                            canUndo = undoableActions.isNotEmpty(),
+                            generateHint = ::generateHint,
+                            canGenerateHint = hints < maxHints
                         )
                     }
                 }

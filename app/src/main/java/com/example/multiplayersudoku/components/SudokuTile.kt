@@ -90,6 +90,7 @@ fun SudokuTile(
 
     // Configure the text color
     val textColor = when {
+        tileData.value != null && tileData.isMistake -> MaterialTheme.colorScheme.error
         isSelected || numberSelected -> MaterialTheme.colorScheme.onPrimary
         groupSelected -> MaterialTheme.colorScheme.onSecondary
         tileData.isEditable && tileData.value != null -> MaterialTheme.colorScheme.primary

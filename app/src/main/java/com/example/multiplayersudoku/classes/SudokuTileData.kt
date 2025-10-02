@@ -6,5 +6,6 @@ data class SudokuTileData(
     var colIndex: Int? = null,
     val isEditable: Boolean,
     val isSelected: Boolean = false,
+    val isMistake: Boolean = false,
     val notes: MutableList<Int> = mutableListOf(),
 )
