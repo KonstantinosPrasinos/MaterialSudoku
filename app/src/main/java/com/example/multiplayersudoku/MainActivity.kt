@@ -13,12 +13,14 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.multiplayersudoku.classes.SudokuBoardData
+import com.example.multiplayersudoku.classes.SudokuTileData
 import com.example.multiplayersudoku.components.ActionButtons
 import com.example.multiplayersudoku.components.InfoBar
 import com.example.multiplayersudoku.components.NumberButtons
@@ -40,7 +42,6 @@ class MainActivity : ComponentActivity() {
     )
 
     // Using the new secondary constructor
-
     @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,10 +67,13 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                 }
+                val undoableActions = remember { mutableStateListOf<SudokuTileData>() }
+
+                fun addToUndoableActions(action: SudokuTileData) = undoableActions.add(action)
 
                 fun eraseSelectedTile() {
-                    val row = selectedTileIndices[0]
-                    val col = selectedTileIndices[1]
+                    val row: Int? = selectedTileIndices[0]
+                    val col: Int? = selectedTileIndices[1]
 
                     if (isPaused || row == null || col == null) return
 
@@ -78,6 +82,9 @@ class MainActivity : ComponentActivity() {
                     val tileToUpdate = newBoard[row][col]
 
                     if (!tileToUpdate.isEditable) return
+
+                    // Add erasing to undoable actions
+                    addToUndoableActions(tileToUpdate)
 
                     // Erase the notes
                     val newNotes = mutableListOf<Int>()
@@ -90,9 +97,26 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                fun setTileValue(number: Int) {
-                    val row = selectedTileIndices[0]
-                    val col = selectedTileIndices[1]
+                fun undoTileState(prevTileState: SudokuTileData) {
+                    val row = prevTileState.rowIndex!!
+                    val col = prevTileState.colIndex!!
+
+                    val newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
+                    val tileToUpdate = newBoard[row][col]
+
+                    newBoard[row][col] =
+                        tileToUpdate.copy(value = prevTileState.value, notes = prevTileState.notes)
+
+                    sudokuBoard = sudokuBoard.copy(
+                        board = newBoard.map { it }
+                    )
+                }
+
+                fun setTileValue(
+                    number: Int
+                ) {
+                    val row: Int? = selectedTileIndices[0]
+                    val col: Int? = selectedTileIndices[1]
 
                     if (isPaused || row == null || col == null) return
 
@@ -112,11 +136,18 @@ class MainActivity : ComponentActivity() {
                         } else {
                             newNotes.add(number)
                         }
+
+                        // Add note to undoable actions
+                        addToUndoableActions(tileToUpdate)
+
                         newBoard[row][col] =
                             tileToUpdate.copy(notes = newNotes)
                     } else {
                         // Logic for updating the main value
                         newBoard[row][col] = tileToUpdate.copy(value = number)
+
+                        // Add setting value to undoable actions
+                        addToUndoableActions(tileToUpdate)
                     }
 
                     sudokuBoard = sudokuBoard.copy(
@@ -124,12 +155,28 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                fun selectTile(row: Int, col: Int) {
+                fun selectTile(row: Int?, col: Int?) {
+                    if (isPaused) return;
+
                     if (row == selectedTileIndices[0] && col == selectedTileIndices[1]) {
                         selectedTileIndices = listOf(null, null)
                     } else {
                         selectedTileIndices = listOf(row, col)
                     }
+                }
+
+                fun togglePaused() {
+                    selectTile(null, null)
+                    isPaused = !isPaused
+                }
+
+                fun undoLastAction() {
+                    if (undoableActions.isEmpty()) return
+
+                    val lastAction = undoableActions.last()
+
+                    undoTileState(lastAction);
+                    undoableActions.removeAt(undoableActions.lastIndex)
                 }
 
                 Scaffold(
@@ -138,7 +185,8 @@ class MainActivity : ComponentActivity() {
                         SudokuTopAppBar(
                             scrollBehavior = scrollBehavior,
                             isPaused = isPaused,
-                            togglePaused = { isPaused = !isPaused })
+                            togglePaused = ::togglePaused
+                        )
                     }
                 ) { innerPadding ->
                     Column(
@@ -152,12 +200,15 @@ class MainActivity : ComponentActivity() {
                             boardData = sudokuBoard,
                             selectedTileIndices = selectedTileIndices,
                             selectTile = ::selectTile,
+                            isPaused = isPaused,
+                            togglePaused = ::togglePaused
                         )
                         NumberButtons(onNumberClick = ::setTileValue, isPaused = isPaused)
                         ActionButtons(
                             isWritingNotes = isWritingNotes,
                             toggleEditing = { isWritingNotes = !isWritingNotes },
-                            eraseTile = ::eraseSelectedTile
+                            eraseTile = ::eraseSelectedTile,
+                            undoLastAction = ::undoLastAction,
                         )
                     }
                 }

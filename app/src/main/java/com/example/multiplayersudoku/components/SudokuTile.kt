@@ -73,6 +73,7 @@ fun SudokuTile(
     interactionSource: MutableInteractionSource,
     onClick: () -> Unit,
     selectedNumber: Int?,
+    isPaused: Boolean = false,
 ) {
     // Configure the background color
     val isSelected =
@@ -170,13 +171,11 @@ fun SudokuTile(
             notedNumbers = tileData.notes,
             textColor = textColor
         )
-        tileData.value?.let {
-            Text(
-                text = it.toString(),
-                color = textColor,
-                fontWeight = fontWeight,
-                fontSize = MaterialTheme.typography.headlineSmall.fontSize
-            )
-        }
+        if (!isPaused && tileData.value != null) Text(
+            text = tileData.value.toString(),
+            color = textColor,
+            fontWeight = fontWeight,
+            fontSize = MaterialTheme.typography.headlineSmall.fontSize
+        )
     }
 }

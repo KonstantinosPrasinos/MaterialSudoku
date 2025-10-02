@@ -19,10 +19,15 @@ import com.example.multiplayersudoku.R
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ActionButtons(isWritingNotes: Boolean, toggleEditing: () -> Unit, eraseTile: () -> Unit) {
+fun ActionButtons(
+    isWritingNotes: Boolean,
+    toggleEditing: () -> Unit,
+    eraseTile: () -> Unit,
+    undoLastAction: () -> Unit,
+) {
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         FilledTonalIconButton(
-            onClick = {},
+            onClick = { undoLastAction() },
             shapes = IconButtonDefaults.shapes(),
             modifier = Modifier.weight(1f)
         ) {

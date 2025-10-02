@@ -10,13 +10,14 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @ExperimentalMaterial3ExpressiveApi
 @Composable
-@Preview
-fun NumberButtons(onNumberClick: (Int) -> Unit = {}, isPaused: Boolean = false) {
+fun NumberButtons(
+    onNumberClick: (Int) -> Unit = {},
+    isPaused: Boolean = false
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
