@@ -20,10 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.multiplayersudoku.classes.SudokuBoardData
 import com.example.multiplayersudoku.components.ActionButtons
+import com.example.multiplayersudoku.components.InfoBar
 import com.example.multiplayersudoku.components.NumberButtons
 import com.example.multiplayersudoku.components.SudokuBoard
 import com.example.multiplayersudoku.components.SudokuTopAppBar
-import com.example.multiplayersudoku.components.TimerBar
 import com.example.multiplayersudoku.ui.theme.MultiplayerSudokuTheme
 
 class MainActivity : ComponentActivity() {
@@ -82,20 +82,15 @@ class MainActivity : ComponentActivity() {
                     // Erase the notes
                     val newNotes = mutableListOf<Int>()
 
-                    newBoard[row][col] =
-                        tileToUpdate.copy(notes = newNotes)
-
                     // Erase the value
-                    newBoard[row][col] = tileToUpdate.copy(value = null)
+                    newBoard[row][col] = tileToUpdate.copy(value = null, notes = newNotes)
 
-                    // Convert the board back to immutable lists and update the state
-                    // This creates a NEW object, which Compose can detect as a state change.
                     sudokuBoard = sudokuBoard.copy(
                         board = newBoard.map { it }
                     )
                 }
 
-                fun setTileValue(number: Int?) {
+                fun setTileValue(number: Int) {
                     val row = selectedTileIndices[0]
                     val col = selectedTileIndices[1]
 
@@ -107,33 +102,23 @@ class MainActivity : ComponentActivity() {
 
                     // Check if the tile is editable before changing it
                     if (!tileToUpdate.isEditable) return
-                    
+
                     if (isWritingNotes) {
-                        if (number == null) {
-                            val newNotes = mutableListOf<Int>()
-
-                            newBoard[row][col] =
-                                tileToUpdate.copy(notes = newNotes)
+                        // Logic for updating notes
+                        val newNotes =
+                            tileToUpdate.notes.toMutableList() // Use a set for notes to avoid duplicates
+                        if (newNotes.contains(number)) {
+                            newNotes.remove(number)
                         } else {
-                            // Logic for updating notes
-                            val newNotes =
-                                tileToUpdate.notes.toMutableList() // Use a set for notes to avoid duplicates
-                            if (newNotes.contains(number)) {
-                                newNotes.remove(number)
-                            } else {
-                                newNotes.add(number)
-                            }
-                            newBoard[row][col] =
-                                tileToUpdate.copy(notes = newNotes)
+                            newNotes.add(number)
                         }
-
+                        newBoard[row][col] =
+                            tileToUpdate.copy(notes = newNotes)
                     } else {
                         // Logic for updating the main value
                         newBoard[row][col] = tileToUpdate.copy(value = number)
                     }
 
-                    // Convert the board back to immutable lists and update the state
-                    // This creates a NEW object, which Compose can detect as a state change.
                     sudokuBoard = sudokuBoard.copy(
                         board = newBoard.map { it }
                     )
@@ -162,7 +147,7 @@ class MainActivity : ComponentActivity() {
                             .padding(horizontal = 10.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        TimerBar(isPaused = isPaused)
+                        InfoBar()
                         SudokuBoard(
                             boardData = sudokuBoard,
                             selectedTileIndices = selectedTileIndices,
@@ -172,7 +157,7 @@ class MainActivity : ComponentActivity() {
                         ActionButtons(
                             isWritingNotes = isWritingNotes,
                             toggleEditing = { isWritingNotes = !isWritingNotes },
-                            eraseTile = { setTileValue(null) }
+                            eraseTile = ::eraseSelectedTile
                         )
                     }
                 }
