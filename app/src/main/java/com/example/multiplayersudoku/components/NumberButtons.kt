@@ -16,17 +16,18 @@ import androidx.compose.ui.unit.dp
 @ExperimentalMaterial3ExpressiveApi
 @Composable
 @Preview
-fun NumberButtons(onNumberClick: (Int) -> Unit = {}) {
+fun NumberButtons(onNumberClick: (Int) -> Unit = {}, isPaused: Boolean = false) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         (1..9).forEach { number ->
             Button(
-                onClick = {},
+                onClick = { onNumberClick(number) },
                 shapes = ButtonDefaults.shapes(),
                 contentPadding = PaddingValues(0.dp),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                enabled = !isPaused
             ) {
                 Text(number.toString())
             }

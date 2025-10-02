@@ -31,6 +31,8 @@ fun SudokuTopAppBar(
 ) {
     TopAppBar(
         title = { },
+//        title = { Text("Mistakes: 1, 2, 3") },
+//        subtitle = { Text("00:00:59") },
         scrollBehavior = scrollBehavior,
         navigationIcon = {
             TooltipBox(

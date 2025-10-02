@@ -19,7 +19,7 @@ import com.example.multiplayersudoku.R
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ActionButtons(isEditing: Boolean, toggleEditing: () -> Unit) {
+fun ActionButtons(isWritingNotes: Boolean, toggleEditing: () -> Unit, eraseTile: () -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         FilledTonalIconButton(
             onClick = {},
@@ -29,7 +29,7 @@ fun ActionButtons(isEditing: Boolean, toggleEditing: () -> Unit) {
             Icon(imageVector = Icons.AutoMirrored.Default.Undo, contentDescription = "")
         }
         FilledTonalIconButton(
-            onClick = {},
+            onClick = { eraseTile() },
             shapes = IconButtonDefaults.shapes(),
             modifier = Modifier.weight(1f)
         ) {
@@ -49,7 +49,7 @@ fun ActionButtons(isEditing: Boolean, toggleEditing: () -> Unit) {
             )
         }
         FilledTonalIconToggleButton(
-            checked = isEditing,
+            checked = isWritingNotes,
             onCheckedChange = { toggleEditing() },
             shapes = IconButtonDefaults.toggleableShapes(),
             modifier = Modifier.weight(1f)

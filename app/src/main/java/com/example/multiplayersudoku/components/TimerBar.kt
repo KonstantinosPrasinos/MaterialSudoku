@@ -32,7 +32,8 @@ import kotlinx.coroutines.delay
 fun TimerBar(
     difficulty: Difficulties = Difficulties.EASY,
     mistakes: Int = 1,
-    isPaused: Boolean = true
+    isPaused: Boolean = true,
+    hints: Int = 1,
 ) {
     var seconds by remember { mutableIntStateOf(0) }
 
@@ -58,7 +59,45 @@ fun TimerBar(
             (1..3).forEach { number ->
                 val animatedColor: Color by animateColorAsState(
                     if (number <= mistakes) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.surfaceVariant,
-                    label = "size"
+                    label = "color"
+                )
+
+                val shape = when (number) {
+                    1 -> {
+                        MaterialShapes.Gem.toShape()
+                    }
+
+                    2 -> {
+                        MaterialShapes.Sunny.toShape()
+                    }
+
+                    else -> {
+                        MaterialShapes.Triangle.toShape()
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(14.dp) // Sets the size to 10dp x 10dp
+                        .background(
+                            color = animatedColor,
+                            shape = shape
+                        )
+                )
+            }
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Hints:",
+                style = MaterialTheme.typography.labelLargeEmphasized,
+            )
+            (1..3).forEach { number ->
+                val animatedColor: Color by animateColorAsState(
+                    if (number <= hints) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    label = "color"
                 )
 
                 val shape = when (number) {

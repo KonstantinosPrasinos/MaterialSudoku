@@ -7,16 +7,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.multiplayersudoku.classes.SudokuTileData
@@ -26,39 +26,42 @@ import com.example.multiplayersudoku.utils.rightBorder
 import com.example.multiplayersudoku.utils.topBorder
 
 @Composable
-fun Fixed3x3Grid() {
+fun Fixed3x3Grid(notedNumbers: MutableList<Int>, textColor: Color) {
     val items = (1..9).toList() // 9 items
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Divide the list of 9 items into 3 rows
+    Column {
         items.chunked(3).forEach { rowItems ->
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f), // Each row takes equal vertical space
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxWidth() // Each row fills the width
+                    .weight(1f),    // Each row takes 1/3 of the vertical space
+                horizontalArrangement = Arrangement.SpaceAround // Distribute cells horizontally
             ) {
-                // Display the 3 items for the current row
                 rowItems.forEach { item ->
-                    Box(
-                        modifier = Modifier
-                            .weight(1f) // Each cell takes equal horizontal space in the Row
-                            .aspectRatio(1f) // Makes the cell a square
-                            .padding(4.dp)
-                            .fillMaxHeight(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = item.toString())
-                    }
+                    GridCell(
+                        item = item,
+                        isNoted = notedNumbers.contains(item),
+                        textColor = textColor
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun RowScope.GridCell(item: Int, isNoted: Boolean = false, textColor: Color) {
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            .aspectRatio(1f),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = item.toString(),
+            style = MaterialTheme.typography.labelSmall,
+            color = if (isNoted) textColor else Color.Transparent
+        )
     }
 }
 
@@ -88,6 +91,7 @@ fun SudokuTile(
     val textColor = when {
         isSelected || numberSelected -> MaterialTheme.colorScheme.onPrimary
         groupSelected -> MaterialTheme.colorScheme.onSecondary
+        tileData.isEditable && tileData.value != null -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -101,7 +105,6 @@ fun SudokuTile(
     val thickBorderWidth = 1.dp;
     val thinBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.37f)
     val thickBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.67f)
-
 
     var borderModifier = if (tileData.rowIndex != 0) {
         if (tileData.rowIndex?.rem(3) == 0) {
@@ -163,6 +166,10 @@ fun SudokuTile(
 
         contentAlignment = Alignment.Center
     ) {
+        if (tileData.value == null) Fixed3x3Grid(
+            notedNumbers = tileData.notes,
+            textColor = textColor
+        )
         tileData.value?.let {
             Text(
                 text = it.toString(),
@@ -171,6 +178,5 @@ fun SudokuTile(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize
             )
         }
-        Fixed3x3Grid()
     }
 }

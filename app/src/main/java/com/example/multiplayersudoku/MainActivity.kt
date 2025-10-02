@@ -40,7 +40,6 @@ class MainActivity : ComponentActivity() {
     )
 
     // Using the new secondary constructor
-    val sudokuBoard = SudokuBoardData.fromInitialValues(initialBoardValues)
 
     @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,8 +48,104 @@ class MainActivity : ComponentActivity() {
         setContent {
             MultiplayerSudokuTheme {
                 val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
                 var isPaused by remember { mutableStateOf(false) }
-                var isEditing by remember { mutableStateOf(false) }
+                var isWritingNotes by remember { mutableStateOf(false) }
+                var sudokuBoard by remember {
+                    mutableStateOf(
+                        SudokuBoardData.fromInitialValues(
+                            initialBoardValues
+                        )
+                    )
+                }
+                var selectedTileIndices by remember {
+                    mutableStateOf<List<Int?>>(
+                        listOf(
+                            null,
+                            null
+                        )
+                    )
+                }
+
+                fun eraseSelectedTile() {
+                    val row = selectedTileIndices[0]
+                    val col = selectedTileIndices[1]
+
+                    if (isPaused || row == null || col == null) return
+
+                    // Create a deep copy of the board to modify it
+                    val newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
+                    val tileToUpdate = newBoard[row][col]
+
+                    if (!tileToUpdate.isEditable) return
+
+                    // Erase the notes
+                    val newNotes = mutableListOf<Int>()
+
+                    newBoard[row][col] =
+                        tileToUpdate.copy(notes = newNotes)
+
+                    // Erase the value
+                    newBoard[row][col] = tileToUpdate.copy(value = null)
+
+                    // Convert the board back to immutable lists and update the state
+                    // This creates a NEW object, which Compose can detect as a state change.
+                    sudokuBoard = sudokuBoard.copy(
+                        board = newBoard.map { it }
+                    )
+                }
+
+                fun setTileValue(number: Int?) {
+                    val row = selectedTileIndices[0]
+                    val col = selectedTileIndices[1]
+
+                    if (isPaused || row == null || col == null) return
+
+                    // Create a deep copy of the board to modify it
+                    val newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
+                    val tileToUpdate = newBoard[row][col]
+
+                    // Check if the tile is editable before changing it
+                    if (!tileToUpdate.isEditable) return
+                    
+                    if (isWritingNotes) {
+                        if (number == null) {
+                            val newNotes = mutableListOf<Int>()
+
+                            newBoard[row][col] =
+                                tileToUpdate.copy(notes = newNotes)
+                        } else {
+                            // Logic for updating notes
+                            val newNotes =
+                                tileToUpdate.notes.toMutableList() // Use a set for notes to avoid duplicates
+                            if (newNotes.contains(number)) {
+                                newNotes.remove(number)
+                            } else {
+                                newNotes.add(number)
+                            }
+                            newBoard[row][col] =
+                                tileToUpdate.copy(notes = newNotes)
+                        }
+
+                    } else {
+                        // Logic for updating the main value
+                        newBoard[row][col] = tileToUpdate.copy(value = number)
+                    }
+
+                    // Convert the board back to immutable lists and update the state
+                    // This creates a NEW object, which Compose can detect as a state change.
+                    sudokuBoard = sudokuBoard.copy(
+                        board = newBoard.map { it }
+                    )
+                }
+
+                fun selectTile(row: Int, col: Int) {
+                    if (row == selectedTileIndices[0] && col == selectedTileIndices[1]) {
+                        selectedTileIndices = listOf(null, null)
+                    } else {
+                        selectedTileIndices = listOf(row, col)
+                    }
+                }
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -68,9 +163,17 @@ class MainActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         TimerBar(isPaused = isPaused)
-                        SudokuBoard(sudokuBoard)
-                        NumberButtons()
-                        ActionButtons(isEditing, toggleEditing = { isEditing = !isEditing })
+                        SudokuBoard(
+                            boardData = sudokuBoard,
+                            selectedTileIndices = selectedTileIndices,
+                            selectTile = ::selectTile,
+                        )
+                        NumberButtons(onNumberClick = ::setTileValue, isPaused = isPaused)
+                        ActionButtons(
+                            isWritingNotes = isWritingNotes,
+                            toggleEditing = { isWritingNotes = !isWritingNotes },
+                            eraseTile = { setTileValue(null) }
+                        )
                     }
                 }
             }
