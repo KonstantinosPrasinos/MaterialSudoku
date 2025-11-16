@@ -50,6 +50,8 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.5.0-alpha04")
     implementation("androidx.compose.material:material:1.9.2")
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.room.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -4,8 +4,8 @@ data class SudokuTileData(
     var value: Int?, // null if the tile is empty
     val rowIndex: Int? = null,
     var colIndex: Int? = null,
-    val isEditable: Boolean,
+    var isEditable: Boolean,
     val isSelected: Boolean = false,
     val isMistake: Boolean = false,
-    val notes: MutableList<Int> = mutableListOf(),
+    var notes: MutableList<Int> = mutableListOf(),
 )

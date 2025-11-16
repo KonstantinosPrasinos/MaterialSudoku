@@ -40,7 +40,8 @@ fun formatTime(totalSeconds: Int): String {
 fun SudokuTopAppBar(
     scrollBehavior: TopAppBarScrollBehavior,
     isPaused: Boolean,
-    togglePaused: () -> Unit
+    togglePaused: () -> Unit,
+    onBack: () -> Unit
 ) {
     var seconds by remember { mutableIntStateOf(0) }
 
@@ -63,7 +64,7 @@ fun SudokuTopAppBar(
                 tooltip = { PlainTooltip { Text("Menu") } },
                 state = rememberTooltipState(),
             ) {
-                IconButton(onClick = { }) {
+                IconButton(onClick = { onBack() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back"
@@ -72,16 +73,12 @@ fun SudokuTopAppBar(
             }
         },
         actions = {
-//            Text(
-//                text = formatTime(seconds),
-//                style = MaterialTheme.typography.labelLargeEmphasized,
-//            )
             TooltipBox(
                 positionProvider =
                     TooltipDefaults.rememberTooltipPositionProvider(
                         TooltipAnchorPosition.Above
                     ),
-                tooltip = { PlainTooltip { Text("Add to favorites") } },
+                tooltip = { PlainTooltip { Text(if (isPaused) "Resume" else "Pause") } },
                 state = rememberTooltipState(),
             ) {
                 FilledTonalIconToggleButton(

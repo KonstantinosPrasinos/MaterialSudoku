@@ -1,5 +1,7 @@
 package com.example.multiplayersudoku.classes
 
+import com.example.multiplayersudoku.utils.generateBoard
+
 data class SudokuBoardData(
     val board: List<List<SudokuTileData>> // A 2D list representing the 9x9 grid
 ) {
@@ -17,6 +19,10 @@ data class SudokuBoardData(
                 }
             }
             return SudokuBoardData(boardData)
+        }
+
+        fun generateRandom(difficulty: Difficulty = Difficulty.EASY): SudokuBoardData {
+            return SudokuBoardData(generateBoard(difficulty))
         }
     }
 }

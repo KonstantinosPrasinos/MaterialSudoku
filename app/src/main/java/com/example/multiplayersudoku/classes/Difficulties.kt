@@ -1,6 +1,6 @@
 package com.example.multiplayersudoku.classes
 
-enum class Difficulties {
+enum class Difficulty {
     EASY,
     MEDIUM,
     HARD
