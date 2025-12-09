@@ -1,4 +1,4 @@
-package com.example.multiplayersudoku.components
+package com.example.multiplayersudoku.views.SudokuView
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
@@ -18,6 +18,7 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,7 +54,7 @@ fun RippleButton(
                 indication = ripple(bounded = true)
             ),
         horizontalArrangement = Arrangement.Center,
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         content()
     }

@@ -1,4 +1,4 @@
-package com.example.multiplayersudoku.components
+package com.example.multiplayersudoku.views.SudokuView
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background

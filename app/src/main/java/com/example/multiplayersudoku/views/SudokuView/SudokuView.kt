@@ -1,4 +1,4 @@
-package com.example.multiplayersudoku.views
+package com.example.multiplayersudoku.views.SudokuView
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,11 +21,6 @@ import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.classes.SudokuBoardData
 import com.example.multiplayersudoku.classes.SudokuTileData
-import com.example.multiplayersudoku.components.ActionButtons
-import com.example.multiplayersudoku.components.InfoBar
-import com.example.multiplayersudoku.components.NumberButtons
-import com.example.multiplayersudoku.components.SudokuBoard
-import com.example.multiplayersudoku.components.SudokuTopAppBar
 import com.example.multiplayersudoku.utils.attemptSolve
 import com.example.multiplayersudoku.utils.updateNotes
 

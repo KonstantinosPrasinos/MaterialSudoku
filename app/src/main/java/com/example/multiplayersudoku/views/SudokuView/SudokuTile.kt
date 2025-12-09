@@ -1,4 +1,4 @@
-package com.example.multiplayersudoku.components
+package com.example.multiplayersudoku.views.SudokuView
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
