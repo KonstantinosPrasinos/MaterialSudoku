@@ -1,5 +1,7 @@
 package com.example.multiplayersudoku.utils
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -8,7 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.views.MainView
-import com.example.multiplayersudoku.views.SudokuView
+import com.example.multiplayersudoku.views.SudokuView.SudokuView
 
 enum class AppView {
     MAIN,
@@ -28,7 +30,29 @@ fun AppNavigation() {
         startDestination = AppView.MAIN.name
     ) {
         // Screen 1: Main
-        composable(AppView.MAIN.name) {
+        composable(
+            route = AppView.MAIN.name,
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right
+                )
+            }
+        ) {
             MainView(
                 onNavigateToSudoku = { difficulty ->
                     navController.navigate("${AppView.SUDOKU_VIEW.name}/${difficulty.name}")
@@ -39,7 +63,27 @@ fun AppNavigation() {
         // Screen 2: SudokuView
         composable(
             route = "${AppView.SUDOKU_VIEW.name}/{$DIFFICULTY_ARG}",
-            arguments = listOf(navArgument(DIFFICULTY_ARG) { type = NavType.StringType })
+            arguments = listOf(navArgument(DIFFICULTY_ARG) { type = NavType.StringType }),
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right
+                )
+            }
         ) { backStackEntry ->
             val difficulty = backStackEntry.arguments?.getString(DIFFICULTY_ARG)
 
