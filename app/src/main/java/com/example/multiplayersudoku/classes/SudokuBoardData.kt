@@ -25,5 +25,9 @@ data class SudokuBoardData(
             return SudokuBoardData(generateBoard(difficulty))
         }
     }
+
+    fun getAsNumberList(): List<List<Int>> {
+        return board.map {row -> row.map({it.value ?: 0})}
+    }
 }
 
