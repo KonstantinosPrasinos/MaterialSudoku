@@ -1,5 +1,5 @@
 data class Player(
-    id: String,
-    displayName: String,
-    profilePictureURL: String
+    val id: String,
+    val displayName: String,
+    val profilePictureURL: String
 )

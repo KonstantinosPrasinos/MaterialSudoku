@@ -39,12 +39,17 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.components.DifficultyPicker
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun MainView(onNavigateToSudoku: (difficulty: Difficulty) -> Unit) {
+fun MainView(
+    onNavigateToSudoku: (difficulty: Difficulty) -> Unit,
+    onNavigateToProfile: () -> Unit
+) {
     val layoutDirection = LocalLayoutDirection.current
 
+    val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState()
     var showPlaySoloBottomSheet by remember { mutableStateOf(false) }
 
@@ -57,7 +62,7 @@ fun MainView(onNavigateToSudoku: (difficulty: Difficulty) -> Unit) {
                 ),
                 title = {},
                 actions = {
-                    IconButton(onClick = { /* do something */ }) {
+                    IconButton(onClick = { onNavigateToProfile() }) {
                         Icon(
                             imageVector = Icons.Filled.AccountCircle,
                             contentDescription = "User icon"
@@ -145,8 +150,12 @@ fun MainView(onNavigateToSudoku: (difficulty: Difficulty) -> Unit) {
                         )
                         DifficultyPicker(
                             onDifficultySelected = { difficulty ->
-                                showPlaySoloBottomSheet = false
-                                onNavigateToSudoku(difficulty)
+                                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                    if (!sheetState.isVisible) {
+                                        showPlaySoloBottomSheet = false;
+                                        onNavigateToSudoku(difficulty);
+                                    }
+                                }
                             }
                         )
                     }

@@ -1,5 +1,23 @@
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StampedPathEffectStyle.Companion.Morph
+import androidx.compose.ui.graphics.asComposePath
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.graphics.shapes.Morph
+import androidx.graphics.shapes.RoundedPolygon
+import androidx.graphics.shapes.toPath
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Preview
 @Composable
 fun AnimatedShape(shape1: RoundedPolygon, shape2: RoundedPolygon) {
     val infiniteAnimation = rememberInfiniteTransition(label = "infinite animation")

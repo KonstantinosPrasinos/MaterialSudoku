@@ -10,11 +10,13 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.views.MainView
+import com.example.multiplayersudoku.views.ProfileView
 import com.example.multiplayersudoku.views.SudokuView.SudokuView
 
 enum class AppView {
     MAIN,
-    SUDOKU_VIEW
+    SUDOKU_VIEW,
+    PROFILE_VIEW
 }
 
 @Composable
@@ -34,28 +36,35 @@ fun AppNavigation() {
             route = AppView.MAIN.name,
             enterTransition = {
                 slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Left
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
                 )
             },
             exitTransition = {
                 slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Left
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
                 )
             },
             popEnterTransition = {
                 slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Right
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
                 )
             },
             popExitTransition = {
                 slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Right
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
                 )
             }
         ) {
             MainView(
                 onNavigateToSudoku = { difficulty ->
                     navController.navigate("${AppView.SUDOKU_VIEW.name}/${difficulty.name}")
+                },
+                onNavigateToProfile = {
+                    navController.navigate(AppView.PROFILE_VIEW.name)
                 }
             )
         }
@@ -66,22 +75,26 @@ fun AppNavigation() {
             arguments = listOf(navArgument(DIFFICULTY_ARG) { type = NavType.StringType }),
             enterTransition = {
                 slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Left
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
                 )
             },
             exitTransition = {
                 slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Left
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
                 )
             },
             popEnterTransition = {
                 slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Right
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
                 )
             },
             popExitTransition = {
                 slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Right
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
                 )
             }
         ) { backStackEntry ->
@@ -98,6 +111,40 @@ fun AppNavigation() {
                     navController.popBackStack()
                 },
                 difficulty = difficultyObject
+            )
+        }
+
+        composable(
+            route = AppView.PROFILE_VIEW.name,
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
+                )
+            }
+        ) {
+            ProfileView(
+                onBack = {
+                    navController.popBackStack()
+                },
             )
         }
     }
