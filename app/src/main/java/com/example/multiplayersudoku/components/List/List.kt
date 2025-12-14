@@ -2,6 +2,7 @@ package com.example.multiplayersudoku.components.List
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -13,15 +14,13 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun List(
-    children: List<@Composable (() -> Unit)>,
-    padding: Dp = 0.dp
+    padding: Dp = 0.dp,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
         modifier = Modifier.padding(padding),
-        verticalArrangement = Arrangement.spacedBy(1.dp)
+        verticalArrangement = Arrangement.spacedBy(2.0.dp)
     ) {
-        children.forEach { child ->
-            child()
-        }
+        content()
     }
 }

@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -59,31 +62,40 @@ fun ProfileView(onBack: () -> Unit) {
     ) { innerPadding ->
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxWidth()
         ) {
             UserIcon("Konstantinos")
-            List(
-                padding = 10.dp,
-                children = listOf(
-                    {
-                        ListItem(order = ListItemOrder.FIRST, onClick = {}, content = {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Logout", style = MaterialTheme.typography.bodyLargeEmphasized)
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                                    contentDescription = "User icon"
-                                )
-                            }
-                        })
+            List(padding = 10.dp) {
+                ListItem(order = ListItemOrder.FIRST, onClick = {}, content = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Statistics", style = MaterialTheme.typography.bodyLargeEmphasized)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = "User icon"
+                        )
                     }
-                )
-            )
+                })
+                ListItem(order = ListItemOrder.LAST, onClick = {}, content = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Logout", style = MaterialTheme.typography.bodyLargeEmphasized)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = "User icon"
+                        )
+                    }
+                })
+            }
         }
     }
 }

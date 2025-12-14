@@ -1,5 +1,6 @@
 package com.example.multiplayersudoku.components.List
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,7 +23,7 @@ enum class ListItemOrder {
 @Composable
 fun ListItem(order: ListItemOrder, content: @Composable () -> Unit, onClick: () -> Unit) {
     Surface(
-        onClick = onClick,
+//        onClick = onClick,
         shape = RoundedCornerShape(
             topStart = if (order == ListItemOrder.FIRST) 16.dp else 0.dp,
             topEnd = if (order == ListItemOrder.FIRST) 16.dp else 0.dp,
@@ -31,10 +32,12 @@ fun ListItem(order: ListItemOrder, content: @Composable () -> Unit, onClick: () 
         ),
         color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
-        Box(
-            modifier = Modifier.padding(10.dp)
-        ) {
-            content()
+        Box(modifier = Modifier.clickable(onClick = onClick)) {
+            Box(
+                modifier = Modifier.padding(10.dp)
+            ) {
+                content()
+            }
         }
     }
 }
