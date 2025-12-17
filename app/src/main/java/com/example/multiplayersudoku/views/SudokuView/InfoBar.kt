@@ -17,8 +17,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.multiplayersudoku.classes.GameSettings
+import com.example.multiplayersudoku.utils.getRandomShape
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Preview
@@ -26,6 +29,8 @@ import androidx.compose.ui.unit.dp
 fun InfoBar(
     mistakes: Int = 1,
     hints: Int = 1,
+    maxMistakes: Int = GameSettings.maxMistakes,
+    maxHints: Int = GameSettings.maxHints,
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -39,25 +44,13 @@ fun InfoBar(
                 text = "Mistakes:",
                 style = MaterialTheme.typography.labelLargeEmphasized,
             )
-            (1..3).forEach { number ->
+            (1..maxMistakes).forEach { number ->
                 val animatedColor: Color by animateColorAsState(
                     if (number <= mistakes) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.surfaceVariant,
                     label = "color"
                 )
 
-                val shape = when (number) {
-                    1 -> {
-                        MaterialShapes.Gem.toShape()
-                    }
-
-                    2 -> {
-                        MaterialShapes.Sunny.toShape()
-                    }
-
-                    else -> {
-                        MaterialShapes.Triangle.toShape()
-                    }
-                }
+                val shape: Shape = getRandomShape();
 
                 Box(
                     modifier = Modifier
@@ -77,25 +70,13 @@ fun InfoBar(
                 text = "Hints:",
                 style = MaterialTheme.typography.labelLargeEmphasized,
             )
-            (1..3).forEach { number ->
+            (1..maxHints).forEach { number ->
                 val animatedColor: Color by animateColorAsState(
                     if (number <= hints) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     label = "color"
                 )
 
-                val shape = when (number) {
-                    1 -> {
-                        MaterialShapes.Gem.toShape()
-                    }
-
-                    2 -> {
-                        MaterialShapes.Sunny.toShape()
-                    }
-
-                    else -> {
-                        MaterialShapes.Triangle.toShape()
-                    }
-                }
+                val shape = getRandomShape()
 
                 Box(
                     modifier = Modifier

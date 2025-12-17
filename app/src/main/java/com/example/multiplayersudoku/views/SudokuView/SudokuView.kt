@@ -26,14 +26,14 @@ import com.example.multiplayersudoku.utils.updateNotes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun SudokuView(onBack: () -> Unit, difficulty: Difficulty) {
+fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     var isPaused by remember { mutableStateOf(false) }
     var isWritingNotes by remember { mutableStateOf(false) }
     var sudokuBoard by remember {
         mutableStateOf(
-            SudokuBoardData.generateRandom(difficulty)
+            SudokuBoardData.generateRandom(gameSettings.difficulty)
         )
     }
     var selectedTileIndices by remember {
@@ -50,7 +50,7 @@ fun SudokuView(onBack: () -> Unit, difficulty: Difficulty) {
     fun addToUndoableActions(action: SudokuTileData) = undoableActions.add(action)
 
     fun generateHint() {
-        if (hints >= GameSettings.maxHints) return;
+        if (hints >= gameSettings.hints) return;
         if (selectedTileIndices[0] == null || selectedTileIndices[1] == null) return
 
         val row: Int = selectedTileIndices[0]!!
@@ -171,6 +171,10 @@ fun SudokuView(onBack: () -> Unit, difficulty: Difficulty) {
 
             if (isMistake) {
                 mistakes = mistakes + 1;
+                if (mistakes >= gameSettings.mistakes) {
+                    // Game over
+                    return;
+                }
             }
 
             newBoard[row][col] =
@@ -238,7 +242,12 @@ fun SudokuView(onBack: () -> Unit, difficulty: Difficulty) {
                 .padding(horizontal = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            InfoBar(hints = hints, mistakes = mistakes)
+            InfoBar(
+                hints = hints,
+                mistakes = mistakes,
+                maxHints = gameSettings.hints,
+                maxMistakes = gameSettings.mistakes
+            )
             SudokuBoard(
                 boardData = sudokuBoard,
                 selectedTileIndices = selectedTileIndices,
@@ -254,7 +263,7 @@ fun SudokuView(onBack: () -> Unit, difficulty: Difficulty) {
                 undoLastAction = ::undoLastAction,
                 canUndo = undoableActions.isNotEmpty(),
                 generateHint = ::generateHint,
-                canGenerateHint = hints < GameSettings.maxHints
+                canGenerateHint = hints < gameSettings.hints
             )
         }
     }

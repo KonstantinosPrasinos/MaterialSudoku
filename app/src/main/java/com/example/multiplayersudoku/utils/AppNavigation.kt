@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.multiplayersudoku.classes.Difficulty
+import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.views.MainView
 import com.example.multiplayersudoku.views.ProfileView
 import com.example.multiplayersudoku.views.SudokuView.SudokuView
@@ -25,6 +26,8 @@ fun AppNavigation() {
     val navController = rememberNavController()
 
     val DIFFICULTY_ARG = "difficulty"
+    val MISTAKES_ARG = "mistakes"
+    val HINTS_ARG = "hints"
 
     // NavHost links the NavController to a navigation graph
     NavHost(
@@ -60,8 +63,8 @@ fun AppNavigation() {
             }
         ) {
             MainView(
-                onNavigateToSudoku = { difficulty ->
-                    navController.navigate("${AppView.SUDOKU_VIEW.name}/${difficulty.name}")
+                onNavigateToSudoku = { gameSettings ->
+                    navController.navigate("${AppView.SUDOKU_VIEW.name}/${gameSettings.difficulty.name}/${gameSettings.mistakes}/${gameSettings.hints}")
                 },
                 onNavigateToProfile = {
                     navController.navigate(AppView.PROFILE_VIEW.name)
@@ -71,8 +74,12 @@ fun AppNavigation() {
 
         // Screen 2: SudokuView
         composable(
-            route = "${AppView.SUDOKU_VIEW.name}/{$DIFFICULTY_ARG}",
-            arguments = listOf(navArgument(DIFFICULTY_ARG) { type = NavType.StringType }),
+            route = "${AppView.SUDOKU_VIEW.name}/{$DIFFICULTY_ARG}/{$MISTAKES_ARG}/{$HINTS_ARG}",
+            arguments = listOf(
+                navArgument(DIFFICULTY_ARG) { type = NavType.StringType },
+                navArgument(MISTAKES_ARG) { type = NavType.IntType },
+                navArgument(HINTS_ARG) { type = NavType.IntType }
+            ),
             enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
@@ -98,19 +105,27 @@ fun AppNavigation() {
                 )
             }
         ) { backStackEntry ->
-            val difficulty = backStackEntry.arguments?.getString(DIFFICULTY_ARG)
+            val difficultyString = backStackEntry.arguments?.getString(DIFFICULTY_ARG)
+            val mistakes = backStackEntry.arguments?.getInt(MISTAKES_ARG) ?: 3
+            val hints = backStackEntry.arguments?.getInt(HINTS_ARG) ?: 5
 
             val difficultyObject = when {
-                difficulty == "EASY" -> Difficulty.EASY
-                difficulty == "MEDIUM" -> Difficulty.MEDIUM
-                difficulty == "HARD" -> Difficulty.HARD
+                difficultyString == "EASY" -> Difficulty.EASY
+                difficultyString == "MEDIUM" -> Difficulty.MEDIUM
+                difficultyString == "HARD" -> Difficulty.HARD
                 else -> Difficulty.EASY
             }
+
+            val gameSettings = GameSettings()
+            gameSettings.difficulty = difficultyObject
+            gameSettings.mistakes = mistakes
+            gameSettings.hints = hints
+
             SudokuView(
                 onBack = {
                     navController.popBackStack()
                 },
-                difficulty = difficultyObject
+                gameSettings = gameSettings
             )
         }
 

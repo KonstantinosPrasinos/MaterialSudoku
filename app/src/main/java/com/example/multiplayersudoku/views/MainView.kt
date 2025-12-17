@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -24,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -38,20 +40,44 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.example.multiplayersudoku.classes.Difficulty
+import com.example.multiplayersudoku.classes.GameSettings
+import com.example.multiplayersudoku.components.ConnectedButtonSelectionGroup.ConnectedSelectionGroup
+import com.example.multiplayersudoku.components.ConnectedButtonSelectionGroup.ConnectedSelectionGroupOption
 import com.example.multiplayersudoku.components.DifficultyPicker
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MainView(
-    onNavigateToSudoku: (difficulty: Difficulty) -> Unit,
+    onNavigateToSudoku: (gameSettings: GameSettings) -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
     val layoutDirection = LocalLayoutDirection.current
 
     val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showPlaySoloBottomSheet by remember { mutableStateOf(false) }
+
+    var selectedDifficulty by remember { mutableStateOf(Difficulty.EASY) }
+
+    val mistakesOptions = (1..GameSettings.maxMistakes).map { it.toString() }
+    var selectedMistakesOption by remember { mutableStateOf(mistakesOptions[1]) }
+
+    val hintsOptions = (1..GameSettings.maxHints).map { it.toString() }
+    var selectedHintsOption by remember { mutableStateOf(hintsOptions[0]) }
+
+    fun startSoloGame() {
+        val gameSettings = GameSettings()
+        gameSettings.mistakes = selectedMistakesOption.toInt()
+        gameSettings.hints = selectedHintsOption.toInt()
+
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+            if (!sheetState.isVisible) {
+                showPlaySoloBottomSheet = false;
+                onNavigateToSudoku(gameSettings);
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -144,20 +170,82 @@ fun MainView(
                         modifier = Modifier.padding(10.dp)
                     ) {
                         Text(
-                            "Select what difficulty to play",
+                            "Difficulty:",
                             style = MaterialTheme.typography.titleLargeEmphasized,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         DifficultyPicker(
-                            onDifficultySelected = { difficulty ->
-                                scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                    if (!sheetState.isVisible) {
-                                        showPlaySoloBottomSheet = false;
-                                        onNavigateToSudoku(difficulty);
-                                    }
-                                }
-                            }
+                            onDifficultySelected = { difficulty -> selectedDifficulty = difficulty },
+                            selectedDifficulty = selectedDifficulty
                         )
+                        Text(
+                            "Max mistakes:",
+                            style = MaterialTheme.typography.titleLargeEmphasized,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        ConnectedSelectionGroup(
+                            items = mistakesOptions,
+                            selectedItem = selectedMistakesOption,
+                            onItemSelected = { selectedMistakesOption = it }, // State is updated here
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        ) { item, isSelected, shape -> // The shape is now provided here!
+
+                            // The parent no longer knows or cares how the shape is made.
+                            ConnectedSelectionGroupOption(
+                                isSelected = isSelected,
+                                onClick = { selectedMistakesOption = item },
+                                shape = shape, // Simply use the provided shape
+                                modifier = Modifier.weight(1f),
+                            ) {
+//                                Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+                                Text(
+                                    item,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurfaceVariant
+
+                                )
+                            }
+                        }
+                        Text(
+                            "Max hints:",
+                            style = MaterialTheme.typography.titleLargeEmphasized,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        ConnectedSelectionGroup(
+                            items = hintsOptions,
+                            selectedItem = selectedHintsOption,
+                            onItemSelected = { selectedHintsOption = it }, // State is updated here
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        ) { item, isSelected, shape -> // The shape is now provided here!
+
+                            // The parent no longer knows or cares how the shape is made.
+                            ConnectedSelectionGroupOption(
+                                isSelected = isSelected,
+                                onClick = { selectedHintsOption = item },
+                                shape = shape, // Simply use the provided shape
+                                modifier = Modifier.weight(1f),
+                            ) {
+//                                Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+                                Text(
+                                    item,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurfaceVariant
+
+                                )
+                            }
+                        }
+                        Button(
+                            onClick = { startSoloGame() },
+                            shapes = ButtonDefaults.shapes(),
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = ButtonDefaults.MediumContentPadding
+                        ) {
+                            Text(
+                                "Play solo",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
                     }
                 }
             }
