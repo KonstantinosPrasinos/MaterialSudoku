@@ -22,6 +22,9 @@ import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.classes.SudokuBoardData
 import com.example.multiplayersudoku.classes.SudokuTileData
 import com.example.multiplayersudoku.utils.attemptSolve
+import com.example.multiplayersudoku.utils.checkCol
+import com.example.multiplayersudoku.utils.checkGrid
+import com.example.multiplayersudoku.utils.checkRow
 import com.example.multiplayersudoku.utils.updateNotes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -84,10 +87,17 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         val newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
         val tileToUpdate = newBoard[row][col]
 
+        val isDuplicate = checkRow(newBoard, tileToUpdate, number) ||
+                checkCol(newBoard, tileToUpdate, number) ||
+                checkGrid(newBoard, tileToUpdate, number);
+
+        if (isDuplicate) return true;
+
         // Place the value in the field and test
         newBoard[row][col] = tileToUpdate.copy(value = number)
 
         val solvedBoard = attemptSolve(newBoard)
+
         return !solvedBoard.isSolved
     }
 
@@ -173,7 +183,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
                 mistakes = mistakes + 1;
                 if (mistakes >= gameSettings.mistakes) {
                     // Game over
-                    return;
+                    // TODO: add sad face 😅 and you lost dialog
                 }
             }
 

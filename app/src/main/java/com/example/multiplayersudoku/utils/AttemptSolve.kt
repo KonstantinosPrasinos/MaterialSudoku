@@ -13,8 +13,14 @@ fun checkRow(
     checkNotes: Boolean = false
 ): Boolean {
     for (tile in boardData[tileToCheck.rowIndex!!]) {
-        if (checkNotes && tileToCheck != tile && tile.notes.contains(value)) return true
-        if (tileToCheck != tile && value == tile.value) return true
+        // Skip the tile itself
+        if (tileToCheck == tile) continue
+
+        // Skip tiles that are known mistakes
+        if (tile.isMistake) continue
+
+        if (checkNotes && tile.notes.contains(value)) return true
+        if (tile.value == value) return true
     }
     return false
 }
@@ -28,10 +34,16 @@ fun checkCol(
     for (row in boardData) {
         val testingTile = row[tileToCheck.colIndex!!]
 
-        if (checkNotes && testingTile != tileToCheck && testingTile.notes.contains(value)) return true
-        if (testingTile != tileToCheck && testingTile.value == value) return true
+        // Skip the tile itself
+        if (testingTile == tileToCheck) continue
+
+        // Skip tiles that are known mistakes
+        if (testingTile.isMistake) continue
+
+        if (checkNotes && testingTile.notes.contains(value)) return true
+        if (testingTile.value == value) return true
     }
-    return false;
+    return false
 }
 
 fun checkGrid(
@@ -45,7 +57,12 @@ fun checkGrid(
     for (r in startRow until startRow + 3) {
         for (c in startCol until startCol + 3) {
             val testingTile = boardData[r][c]
+
+            // Skip the tile itself
             if (testingTile == tileToCheck) continue
+
+            // Skip tiles that are known mistakes
+            if (testingTile.isMistake) continue
 
             if (checkNotes && testingTile.notes.contains(value)) return true
             if (testingTile.value == value) return true
@@ -53,6 +70,7 @@ fun checkGrid(
     }
     return false
 }
+
 
 fun updateNotes(
     boardData: List<List<SudokuTileData>>,

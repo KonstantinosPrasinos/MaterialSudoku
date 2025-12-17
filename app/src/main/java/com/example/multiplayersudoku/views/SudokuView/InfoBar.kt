@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +33,13 @@ fun InfoBar(
     maxMistakes: Int = GameSettings.maxMistakes,
     maxHints: Int = GameSettings.maxHints,
 ) {
+    val mistakeShapes = remember(maxMistakes) {
+        List(maxMistakes) { getRandomShape() }
+    }
+    val hintShapes = remember(maxHints) {
+        List(maxHints) { getRandomShape() }
+    }
+
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier.fillMaxWidth()
@@ -44,13 +52,13 @@ fun InfoBar(
                 text = "Mistakes:",
                 style = MaterialTheme.typography.labelLargeEmphasized,
             )
-            (1..maxMistakes).forEach { number ->
+            (1..maxMistakes).forEachIndexed { index, number ->
                 val animatedColor: Color by animateColorAsState(
                     if (number <= mistakes) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.surfaceVariant,
                     label = "color"
                 )
 
-                val shape: Shape = getRandomShape();
+                val shape: Shape = mistakeShapes[index].toShape()
 
                 Box(
                     modifier = Modifier
@@ -70,13 +78,13 @@ fun InfoBar(
                 text = "Hints:",
                 style = MaterialTheme.typography.labelLargeEmphasized,
             )
-            (1..maxHints).forEach { number ->
+            (1..maxHints).forEachIndexed { index, number ->
                 val animatedColor: Color by animateColorAsState(
                     if (number <= hints) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     label = "color"
                 )
 
-                val shape = getRandomShape()
+                val shape: Shape = hintShapes[index].toShape()
 
                 Box(
                     modifier = Modifier

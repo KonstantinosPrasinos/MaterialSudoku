@@ -1,5 +1,6 @@
 package com.example.multiplayersudoku.views.SudokuView
 
+import android.os.Debug
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -41,7 +42,7 @@ fun Fixed3x3Grid(notedNumbers: MutableList<Int>, textColor: Color) {
                     GridCell(
                         item = item,
                         isNoted = notedNumbers.contains(item),
-                        textColor = textColor
+                        textColor = textColor.copy(alpha = 0.6f)
                     )
                 }
             }
@@ -92,14 +93,8 @@ fun SudokuTile(
     val textColor = when {
         tileData.value != null && tileData.isMistake -> MaterialTheme.colorScheme.error
         isSelected || numberSelected -> MaterialTheme.colorScheme.onPrimary
-        groupSelected -> MaterialTheme.colorScheme.onSecondary
         tileData.isEditable && tileData.value != null -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    val fontWeight = when {
-        tileData.isEditable -> FontWeight.Normal
-        else -> FontWeight.SemiBold
     }
 
     // Add the borders
@@ -175,7 +170,7 @@ fun SudokuTile(
         if (!isPaused && tileData.value != null) Text(
             text = tileData.value.toString(),
             color = textColor,
-            fontWeight = fontWeight,
+            fontWeight = FontWeight.SemiBold,
             fontSize = MaterialTheme.typography.headlineSmall.fontSize
         )
     }

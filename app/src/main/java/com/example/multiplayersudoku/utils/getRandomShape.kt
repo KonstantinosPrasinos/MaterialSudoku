@@ -8,9 +8,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.graphics.shapes.RoundedPolygon
 import generateRandomNumber
 
-@Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun getRandomShape(): Shape {
+fun getRandomShape(): RoundedPolygon {
     val allShapes = listOf(
         MaterialShapes.Gem,
         MaterialShapes.Sunny,
@@ -37,5 +36,5 @@ fun getRandomShape(): Shape {
     val index = generateRandomNumber(0, allShapes.size - 1)
     val shape = allShapes[index]
 
-    return shape.toShape();
+    return shape;
 }
