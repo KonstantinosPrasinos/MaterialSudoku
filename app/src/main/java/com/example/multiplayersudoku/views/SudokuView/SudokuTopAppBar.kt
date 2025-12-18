@@ -1,5 +1,7 @@
 package com.example.multiplayersudoku.views.SudokuView
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Pause
@@ -10,6 +12,7 @@ import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
@@ -25,6 +28,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.example.multiplayersudoku.classes.Difficulty
 import kotlinx.coroutines.delay
 
 fun formatTime(totalSeconds: Int): String {
@@ -41,9 +46,12 @@ fun SudokuTopAppBar(
     scrollBehavior: TopAppBarScrollBehavior,
     isPaused: Boolean,
     togglePaused: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    difficulty: Difficulty
 ) {
     var seconds by remember { mutableIntStateOf(0) }
+
+    val difficultyFormatted = difficulty.name.lowercase().replaceFirstChar { it.uppercase() }
 
     LaunchedEffect(isPaused) {
         while (!isPaused) {
@@ -53,7 +61,13 @@ fun SudokuTopAppBar(
     }
 
     TopAppBar(
-        title = { Text(formatTime(seconds)) },
+        title = {
+            Text(
+                formatTime(seconds),
+                style = MaterialTheme.typography.titleLargeEmphasized,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        },
         scrollBehavior = scrollBehavior,
         navigationIcon = {
             TooltipBox(
@@ -73,6 +87,12 @@ fun SudokuTopAppBar(
             }
         },
         actions = {
+            Text(
+                difficultyFormatted,
+                style = MaterialTheme.typography.titleLargeEmphasized,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(Modifier.width(10.dp))
             TooltipBox(
                 positionProvider =
                     TooltipDefaults.rememberTooltipPositionProvider(

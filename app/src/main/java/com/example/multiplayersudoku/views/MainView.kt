@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -25,7 +24,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -39,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
-import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.components.ConnectedButtonSelectionGroup.ConnectedSelectionGroup
 import com.example.multiplayersudoku.components.ConnectedButtonSelectionGroup.ConnectedSelectionGroupOption
@@ -58,7 +55,7 @@ fun MainView(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showPlaySoloBottomSheet by remember { mutableStateOf(false) }
 
-    var selectedDifficulty by remember { mutableStateOf(Difficulty.EASY) }
+    var selectedDifficulty by remember { mutableStateOf(GameSettings.defaultDifficulty) }
 
     val mistakesOptions = (1..GameSettings.maxMistakes).map { it.toString() }
     var selectedMistakesOption by remember { mutableStateOf(mistakesOptions[1]) }
@@ -73,8 +70,8 @@ fun MainView(
 
         scope.launch { sheetState.hide() }.invokeOnCompletion {
             if (!sheetState.isVisible) {
-                showPlaySoloBottomSheet = false;
-                onNavigateToSudoku(gameSettings);
+                showPlaySoloBottomSheet = false
+                onNavigateToSudoku(gameSettings)
             }
         }
     }

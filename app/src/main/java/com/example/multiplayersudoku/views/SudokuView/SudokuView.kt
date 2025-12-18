@@ -1,12 +1,17 @@
 package com.example.multiplayersudoku.views.SudokuView
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.classes.SudokuBoardData
 import com.example.multiplayersudoku.classes.SudokuTileData
@@ -31,6 +35,9 @@ import com.example.multiplayersudoku.utils.updateNotes
 @Composable
 fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    var showExitDialog by remember { mutableStateOf(false) }
+    var showGameEndDialog by remember { mutableStateOf(false) }
 
     var isPaused by remember { mutableStateOf(false) }
     var isWritingNotes by remember { mutableStateOf(false) }
@@ -53,7 +60,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
     fun addToUndoableActions(action: SudokuTileData) = undoableActions.add(action)
 
     fun generateHint() {
-        if (hints >= gameSettings.hints) return;
+        if (hints >= gameSettings.hints) return
         if (selectedTileIndices[0] == null || selectedTileIndices[1] == null) return
 
         val row: Int = selectedTileIndices[0]!!
@@ -64,7 +71,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         if (!tileToUpdate.isEditable) return
         if (tileToUpdate.value != null && !tileToUpdate.isMistake) return
 
-        hints = hints + 1
+        hints += 1
 
         val newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
         tileToUpdate = newBoard[row][col]
@@ -89,9 +96,9 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
 
         val isDuplicate = checkRow(newBoard, tileToUpdate, number) ||
                 checkCol(newBoard, tileToUpdate, number) ||
-                checkGrid(newBoard, tileToUpdate, number);
+                checkGrid(newBoard, tileToUpdate, number)
 
-        if (isDuplicate) return true;
+        if (isDuplicate) return true
 
         // Place the value in the field and test
         newBoard[row][col] = tileToUpdate.copy(value = number)
@@ -180,7 +187,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
             val isMistake = checkForMistakes(number, row, col)
 
             if (isMistake) {
-                mistakes = mistakes + 1;
+                mistakes = mistakes + 1
                 if (mistakes >= gameSettings.mistakes) {
                     // Game over
                     // TODO: add sad face 😅 and you lost dialog
@@ -206,7 +213,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
     }
 
     fun selectTile(row: Int?, col: Int?) {
-        if (isPaused) return;
+        if (isPaused) return
 
         if (row == selectedTileIndices[0] && col == selectedTileIndices[1]) {
             selectedTileIndices = listOf(null, null)
@@ -221,7 +228,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
     }
 
     fun undoLastAction() {
-        var solvedBoard = attemptSolve(sudokuBoard.board)
+        val solvedBoard = attemptSolve(sudokuBoard.board)
 
         sudokuBoard = sudokuBoard.copy(
             board = solvedBoard.boardData.map { it }
@@ -231,8 +238,45 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
 
         val lastAction = undoableActions.last()
 
-        undoTileState(lastAction);
+        undoTileState(lastAction)
         undoableActions.removeAt(undoableActions.lastIndex)
+    }
+
+    BackHandler(enabled = !showExitDialog) {
+        isPaused = true
+        showExitDialog = true
+    }
+
+    fun toggleExitDialog() {
+        showExitDialog = !showExitDialog
+        togglePaused()
+    }
+
+    fun toggleGameEndDialog() {
+        showGameEndDialog = !showGameEndDialog
+    }
+
+    if (showExitDialog) {
+        AlertDialog(
+            onDismissRequest = { toggleExitDialog() },
+            title = { Text("Quit Game?") },
+            text = { Text("Are you sure you want to leave? Your progress will be lost.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showExitDialog = false
+                        onBack()
+                    }
+                ) {
+                    Text("Quit")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { toggleExitDialog() }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -242,7 +286,8 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
                 scrollBehavior = scrollBehavior,
                 isPaused = isPaused,
                 togglePaused = ::togglePaused,
-                onBack = onBack
+                onBack = ::toggleExitDialog,
+                difficulty = gameSettings.difficulty,
             )
         }
     ) { innerPadding ->
@@ -256,7 +301,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
                 hints = hints,
                 mistakes = mistakes,
                 maxHints = gameSettings.hints,
-                maxMistakes = gameSettings.mistakes
+                maxMistakes = gameSettings.mistakes,
             )
             SudokuBoard(
                 boardData = sudokuBoard,
