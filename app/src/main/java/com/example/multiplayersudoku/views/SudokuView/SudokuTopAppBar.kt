@@ -22,15 +22,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.multiplayersudoku.classes.Difficulty
-import kotlinx.coroutines.delay
+import com.example.multiplayersudoku.utils.formatDifficulty
 
 fun formatTime(totalSeconds: Int): String {
     val hours = totalSeconds / 3600
@@ -47,18 +42,10 @@ fun SudokuTopAppBar(
     isPaused: Boolean,
     togglePaused: () -> Unit,
     onBack: () -> Unit,
-    difficulty: Difficulty
+    difficulty: Difficulty,
+    seconds: Int = 0
 ) {
-    var seconds by remember { mutableIntStateOf(0) }
-
-    val difficultyFormatted = difficulty.name.lowercase().replaceFirstChar { it.uppercase() }
-
-    LaunchedEffect(isPaused) {
-        while (!isPaused) {
-            delay(1000)
-            seconds++
-        }
-    }
+    val difficultyFormatted = formatDifficulty(difficulty)
 
     TopAppBar(
         title = {

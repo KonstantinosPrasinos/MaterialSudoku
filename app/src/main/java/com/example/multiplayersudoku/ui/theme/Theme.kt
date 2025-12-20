@@ -1,6 +1,5 @@
 package com.example.multiplayersudoku.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,6 +8,10 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
@@ -33,6 +36,14 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+@Immutable
+data class ExtendedColorScheme(
+    val success: Color = Color.Unspecified,
+    val win: Color = Color(0xFFF9CA24)
+)
+
+val LocalExtendedColorScheme = staticCompositionLocalOf { ExtendedColorScheme() }
+
 @Composable
 fun MultiplayerSudokuTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -50,9 +61,17 @@ fun MultiplayerSudokuTheme(
         else -> LightColorScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    val extendedColors = ExtendedColorScheme()
+
+    CompositionLocalProvider(LocalExtendedColorScheme provides extendedColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }
+
+val MaterialTheme.extendedColors: ExtendedColorScheme
+    @Composable
+    get() = LocalExtendedColorScheme.current

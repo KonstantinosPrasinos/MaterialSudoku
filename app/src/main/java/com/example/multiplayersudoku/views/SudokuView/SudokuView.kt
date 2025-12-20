@@ -5,15 +5,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -21,15 +25,97 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.example.multiplayersudoku.R
+import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.classes.SudokuBoardData
 import com.example.multiplayersudoku.classes.SudokuTileData
+import com.example.multiplayersudoku.ui.theme.extendedColors
 import com.example.multiplayersudoku.utils.attemptSolve
 import com.example.multiplayersudoku.utils.checkCol
 import com.example.multiplayersudoku.utils.checkGrid
 import com.example.multiplayersudoku.utils.checkRow
+import com.example.multiplayersudoku.utils.formatDifficulty
 import com.example.multiplayersudoku.utils.updateNotes
+import kotlinx.coroutines.delay
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun EndDialogText(difficulty: Difficulty, seconds: Int, userHasWon: Boolean) {
+    val firstPart: String = when {
+        userHasWon && difficulty === Difficulty.EASY -> "Mastered the basics! You conquered "
+        userHasWon && difficulty === Difficulty.MEDIUM -> "Impressive focus! You navigated the twists of "
+        userHasWon && difficulty === Difficulty.HARD -> "Absolute logic! You dismantled a "
+        !userHasWon && difficulty === Difficulty.EASY -> "You may have lost on "
+        !userHasWon && difficulty === Difficulty.MEDIUM -> ""
+        else -> "No shame in falling here. "
+    }
+
+    val secondPart: String = formatDifficulty(difficulty)
+
+    val thirdPart: String = when {
+        userHasWon && difficulty === Difficulty.EASY -> " mode in just "
+        userHasWon && difficulty === Difficulty.MEDIUM -> " difficulty in "
+        userHasWon && difficulty === Difficulty.HARD -> " board in "
+        !userHasWon && difficulty === Difficulty.EASY -> " mode, but at least it only took you "
+        !userHasWon && difficulty === Difficulty.MEDIUM -> " difficulty proved to be quite a puzzle. You fought a good fight for "
+        else -> " mode is a gauntlet, and you survived for "
+    }
+
+    val fourthPart: String = formatTime(seconds)
+
+    val fifthPart: String = when {
+        userHasWon && difficulty === Difficulty.EASY -> ". Ready to step up your game?"
+        userHasWon && difficulty === Difficulty.MEDIUM -> ". You're officially a Sudoku contender."
+        userHasWon && difficulty === Difficulty.HARD -> ". That's a performance even the pros would respect."
+        !userHasWon && difficulty === Difficulty.EASY -> " to realize the numbers weren't on your side today."
+        !userHasWon && difficulty === Difficulty.MEDIUM -> " , but the opponent was just one step ahead."
+        else -> " before the grid finally got the best of you."
+    }
+
+    val emphasizedStyle =
+        MaterialTheme.typography.titleMediumEmphasized.copy(color = MaterialTheme.colorScheme.primary).toSpanStyle()
+    val normalStyle = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onSurface)
+        .toSpanStyle()
+
+    Text(text = buildAnnotatedString {
+        withStyle(
+            style = normalStyle
+        ) {
+            append(firstPart)
+        }
+
+        // Apply a bold, red style to the difficulty
+        withStyle(
+            style = emphasizedStyle
+        ) {
+            append(secondPart)
+        }
+
+        withStyle(
+            style = normalStyle
+        ) {
+            append(thirdPart)
+        }
+
+        // Apply an italic style to the time
+        withStyle(
+            style = emphasizedStyle
+        ) {
+            append(fourthPart)
+        }
+
+        withStyle(
+            style = normalStyle
+        ) {
+            append(fifthPart)
+        }
+    })
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -38,6 +124,9 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
 
     var showExitDialog by remember { mutableStateOf(false) }
     var showGameEndDialog by remember { mutableStateOf(false) }
+    var userHasWon by remember { mutableStateOf(false) }
+    var seconds by remember { mutableIntStateOf(0) }
+    var doTimer by remember { mutableStateOf(true) }
 
     var isPaused by remember { mutableStateOf(false) }
     var isWritingNotes by remember { mutableStateOf(false) }
@@ -57,7 +146,19 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
     val undoableActions = remember { mutableStateListOf<SudokuTileData>() }
     var hints by remember { mutableIntStateOf(0) }
     var mistakes by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(isPaused) {
+        while (!isPaused && doTimer) {
+            delay(1000)
+            seconds++
+        }
+    }
+
     fun addToUndoableActions(action: SudokuTileData) = undoableActions.add(action)
+
+    fun toggleGameEndDialog() {
+        showGameEndDialog = !showGameEndDialog
+    }
 
     fun generateHint() {
         if (hints >= gameSettings.hints) return
@@ -106,6 +207,21 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         val solvedBoard = attemptSolve(newBoard)
 
         return !solvedBoard.isSolved
+    }
+
+    fun checkForWin(board: List<List<SudokuTileData>>): Boolean {
+        var emptyTileFound = false
+
+        for (row in board) {
+            for (tile in row) {
+                if (tile.value == null || tile.isMistake) {
+                    emptyTileFound = true
+                    break
+                }
+            }
+        }
+
+        return !emptyTileFound
     }
 
     fun eraseSelectedTile() {
@@ -187,10 +303,11 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
             val isMistake = checkForMistakes(number, row, col)
 
             if (isMistake) {
-                mistakes = mistakes + 1
+                mistakes += 1
                 if (mistakes >= gameSettings.mistakes) {
-                    // Game over
-                    // TODO: add sad face 😅 and you lost dialog
+                    userHasWon = false
+                    doTimer = false
+                    toggleGameEndDialog()
                 }
             }
 
@@ -205,6 +322,12 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
                     tileToUpdate,
                     number
                 ) as MutableList<MutableList<SudokuTileData>>
+
+            if (checkForWin(newBoard)) {
+                userHasWon = true
+                doTimer = false
+                toggleGameEndDialog()
+            }
         }
 
         sudokuBoard = sudokuBoard.copy(
@@ -252,10 +375,6 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         togglePaused()
     }
 
-    fun toggleGameEndDialog() {
-        showGameEndDialog = !showGameEndDialog
-    }
-
     if (showExitDialog) {
         AlertDialog(
             onDismissRequest = { toggleExitDialog() },
@@ -279,6 +398,36 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         )
     }
 
+    if (showGameEndDialog) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text(if (userHasWon) "You won 🎉" else "You lost 😅") },
+            icon = {
+                if (userHasWon) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_chess_queen),
+                        contentDescription = "Crown",
+                        tint = MaterialTheme.extendedColors.win,
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+            },
+            text = { EndDialogText(gameSettings.difficulty, seconds, userHasWon) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showGameEndDialog = false
+                        onBack()
+                    }
+                ) {
+                    Text("Continue")
+                }
+            }
+        )
+    }
+
+    EndDialogText(gameSettings.difficulty, seconds, userHasWon)
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -288,6 +437,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
                 togglePaused = ::togglePaused,
                 onBack = ::toggleExitDialog,
                 difficulty = gameSettings.difficulty,
+                seconds = seconds
             )
         }
     ) { innerPadding ->
