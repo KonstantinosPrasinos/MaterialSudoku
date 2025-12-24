@@ -29,11 +29,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.multiplayersudoku.R
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.classes.SudokuBoardData
 import com.example.multiplayersudoku.classes.SudokuTileData
+import com.example.multiplayersudoku.datastore.gameResult.GameResult
 import com.example.multiplayersudoku.ui.theme.extendedColors
 import com.example.multiplayersudoku.utils.attemptSolve
 import com.example.multiplayersudoku.utils.checkCol
@@ -120,6 +122,7 @@ fun EndDialogText(difficulty: Difficulty, seconds: Int, userHasWon: Boolean) {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
+    val viewModel: SudokuViewModel = hiltViewModel()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     var showExitDialog by remember { mutableStateOf(false) }
@@ -265,6 +268,22 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         )
     }
 
+    fun finalizeGame() {
+        doTimer = false
+
+        val result = GameResult(
+            difficulty = gameSettings.difficulty.name,
+            durationSeconds = seconds.toLong(),
+            wasCompleted = userHasWon,
+            mistakesCount = mistakes,
+            hintsUsed = hints
+        )
+
+        viewModel.onGameFinished(result)
+
+        toggleGameEndDialog()
+    }
+
     fun setTileValue(
         number: Int
     ) {
@@ -306,8 +325,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
                 mistakes += 1
                 if (mistakes >= gameSettings.mistakes) {
                     userHasWon = false
-                    doTimer = false
-                    toggleGameEndDialog()
+                    finalizeGame()
                 }
             }
 
@@ -325,8 +343,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
 
             if (checkForWin(newBoard)) {
                 userHasWon = true
-                doTimer = false
-                toggleGameEndDialog()
+                finalizeGame()
             }
         }
 

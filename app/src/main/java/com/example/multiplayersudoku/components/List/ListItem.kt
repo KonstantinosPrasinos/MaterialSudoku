@@ -1,9 +1,7 @@
 package com.example.multiplayersudoku.components.List
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -21,7 +19,7 @@ enum class ListItemOrder {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ListItem(order: ListItemOrder, content: @Composable () -> Unit, onClick: () -> Unit) {
+fun ListItem(order: ListItemOrder, content: @Composable () -> Unit, onClick: (() -> Unit)? = null) {
     Surface(
 //        onClick = onClick,
         shape = RoundedCornerShape(
@@ -32,9 +30,9 @@ fun ListItem(order: ListItemOrder, content: @Composable () -> Unit, onClick: () 
         ),
         color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
-        Box(modifier = Modifier.clickable(onClick = onClick)) {
+        Box(modifier = if (onClick != null) Modifier.clickable { onClick() } else Modifier) {
             Box(
-                modifier = Modifier.padding(10.dp)
+                modifier = Modifier.padding(12.dp)
             ) {
                 content()
             }

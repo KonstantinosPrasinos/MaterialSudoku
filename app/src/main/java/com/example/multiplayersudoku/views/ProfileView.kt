@@ -9,8 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -35,7 +33,7 @@ import com.example.multiplayersudoku.components.UserIcon
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileView(onBack: () -> Unit) {
+fun ProfileView(onBack: () -> Unit, onNavigateToStatistics: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -69,19 +67,24 @@ fun ProfileView(onBack: () -> Unit) {
         ) {
             UserIcon("Konstantinos")
             List(padding = 10.dp) {
-                ListItem(order = ListItemOrder.FIRST, onClick = {}, content = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Statistics", style = MaterialTheme.typography.bodyLargeEmphasized)
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = "User icon"
-                        )
-                    }
-                })
+                ListItem(
+                    order = ListItemOrder.FIRST,
+                    onClick = {
+                        onNavigateToStatistics()
+                    },
+                    content = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Statistics", style = MaterialTheme.typography.bodyLargeEmphasized)
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = "User icon"
+                            )
+                        }
+                    })
                 ListItem(order = ListItemOrder.LAST, onClick = {}, content = {
                     Row(
                         modifier = Modifier.fillMaxWidth(),

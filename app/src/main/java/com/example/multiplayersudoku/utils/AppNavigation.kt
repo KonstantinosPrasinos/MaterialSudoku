@@ -13,11 +13,13 @@ import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.views.MainView
 import com.example.multiplayersudoku.views.ProfileView
 import com.example.multiplayersudoku.views.SudokuView.SudokuView
+import com.example.multiplayersudoku.views.statisticsView.StatisticsView
 
 enum class AppView {
     MAIN,
     SUDOKU_VIEW,
-    PROFILE_VIEW
+    PROFILE_VIEW,
+    STATISTICS_VIEW
 }
 
 @Composable
@@ -67,8 +69,8 @@ fun AppNavigation() {
                     navController.navigate("${AppView.SUDOKU_VIEW.name}/${gameSettings.difficulty.name}/${gameSettings.mistakes}/${gameSettings.hints}")
                 },
                 onNavigateToProfile = {
-                    navController.navigate(AppView.PROFILE_VIEW.name)
-                }
+                    navController.navigate(AppView.STATISTICS_VIEW.name)
+                },
             )
         }
 
@@ -157,6 +159,43 @@ fun AppNavigation() {
             }
         ) {
             ProfileView(
+                onBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToStatistics = {
+                    navController.navigate(AppView.STATISTICS_VIEW.name)
+                }
+            )
+        }
+
+        composable(
+            route = AppView.STATISTICS_VIEW.name,
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
+                )
+            }
+        ) {
+            StatisticsView(
                 onBack = {
                     navController.popBackStack()
                 },

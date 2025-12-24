@@ -14,6 +14,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -87,8 +88,8 @@ fun MainView(
                 actions = {
                     IconButton(onClick = { onNavigateToProfile() }) {
                         Icon(
-                            imageVector = Icons.Filled.AccountCircle,
-                            contentDescription = "User icon"
+                            imageVector = Icons.Filled.BarChart,
+                            contentDescription = "Bar chart icon"
                         )
                     }
                 },
@@ -138,6 +139,7 @@ fun MainView(
                         )
                     }
                     Button(
+                        enabled = false,
                         onClick = {},
                         shapes = ButtonDefaults.shapes(),
                         modifier = Modifier
@@ -147,7 +149,7 @@ fun MainView(
                         contentPadding = ButtonDefaults.MediumContentPadding
                     ) {
                         Text(
-                            "Play versus",
+                            "Play versus (coming soon)",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onPrimary
                         )
