@@ -1,5 +1,6 @@
 package com.example.multiplayersudoku.utils
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable

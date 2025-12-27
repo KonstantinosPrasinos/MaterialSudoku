@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -25,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -68,6 +68,7 @@ fun MainView(
         val gameSettings = GameSettings()
         gameSettings.mistakes = selectedMistakesOption.toInt()
         gameSettings.hints = selectedHintsOption.toInt()
+        gameSettings.difficulty = selectedDifficulty
 
         scope.launch { sheetState.hide() }.invokeOnCompletion {
             if (!sheetState.isVisible) {
@@ -114,11 +115,10 @@ fun MainView(
             )
             Spacer(modifier = Modifier.weight(1f))
             Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
                     .fillMaxWidth(),
-                elevation = 8.dp
+                tonalElevation = 3.dp
             ) {
                 Row(
                     modifier = Modifier.padding(10.dp),
