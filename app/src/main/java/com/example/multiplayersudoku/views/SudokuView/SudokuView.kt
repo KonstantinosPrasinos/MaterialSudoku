@@ -24,13 +24,14 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.example.multiplayersudoku.R
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
@@ -151,12 +152,19 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
     var hints by remember { mutableIntStateOf(0) }
     var mistakes by remember { mutableIntStateOf(0) }
 
+    // This fires when isPaused is changed
     LaunchedEffect(isPaused) {
         while (!isPaused && doTimer) {
             delay(1000)
             seconds++
         }
     }
+
+    /*
+     This is used by [LaunchedEffect] to check if the window has lost focus
+     */
+    val windowInfo = LocalWindowInfo.current
+    var isFirstRun by remember { mutableStateOf(true) }
 
     fun addToUndoableActions(action: SudokuTileData) = undoableActions.add(action)
 
@@ -368,6 +376,11 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         isPaused = !isPaused
     }
 
+    fun setPaused(value: Boolean) {
+        selectTile(null, null)
+        isPaused = value
+    }
+
     fun undoLastAction() {
         val solvedBoard = attemptSolve(sudokuBoard.board)
 
@@ -383,25 +396,31 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         undoableActions.removeAt(undoableActions.lastIndex)
     }
 
+    fun setExitDialogVisibility(value: Boolean = true) {
+        showExitDialog = value
+        setPaused(value)
+    }
+
     BackHandler(enabled = !showExitDialog) {
-        isPaused = true
-        showExitDialog = true
+        setExitDialogVisibility(true)
     }
 
-    fun toggleExitDialog() {
-        showExitDialog = !showExitDialog
-        togglePaused()
-    }
+    LaunchedEffect(windowInfo) {
+        snapshotFlow { windowInfo.isWindowFocused }.collect { isFocused ->
+            if (isFirstRun) {
+                isFirstRun = false
+                return@collect
+            }
 
-    LifecycleResumeEffect(Unit) {
-        onPauseOrDispose {
-            togglePaused()
+            if (!isFocused) {
+                setPaused(true)
+            }
         }
     }
 
     if (showExitDialog) {
         AlertDialog(
-            onDismissRequest = { toggleExitDialog() },
+            onDismissRequest = { setExitDialogVisibility(false) },
             title = { Text("Quit Game?") },
             text = { Text("Are you sure you want to leave? Your progress will be lost.") },
             confirmButton = {
@@ -415,7 +434,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
                 }
             },
             dismissButton = {
-                TextButton(onClick = { toggleExitDialog() }) {
+                TextButton(onClick = { setExitDialogVisibility(false) }) {
                     Text("Cancel")
                 }
             }
@@ -459,7 +478,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
                 scrollBehavior = scrollBehavior,
                 isPaused = isPaused,
                 togglePaused = ::togglePaused,
-                onBack = ::toggleExitDialog,
+                onBack = { setExitDialogVisibility(true) },
                 difficulty = gameSettings.difficulty,
                 seconds = seconds
             )
