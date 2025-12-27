@@ -30,6 +30,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.example.multiplayersudoku.R
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
@@ -390,6 +391,12 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
     fun toggleExitDialog() {
         showExitDialog = !showExitDialog
         togglePaused()
+    }
+
+    LifecycleResumeEffect(Unit) {
+        onPauseOrDispose {
+            togglePaused()
+        }
     }
 
     if (showExitDialog) {
