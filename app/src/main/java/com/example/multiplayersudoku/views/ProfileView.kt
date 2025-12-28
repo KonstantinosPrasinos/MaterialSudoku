@@ -21,8 +21,14 @@ import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -30,10 +36,31 @@ import com.example.multiplayersudoku.components.List.List
 import com.example.multiplayersudoku.components.List.ListItem
 import com.example.multiplayersudoku.components.List.ListItemOrder
 import com.example.multiplayersudoku.components.UserIcon
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileView(onBack: () -> Unit, onNavigateToStatistics: () -> Unit) {
+    var showLoginModal by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    fun toggleLoginBottomSheet() {
+        if (showLoginModal) {
+            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                if (!sheetState.isVisible) {
+                    showLoginModal = false
+                }
+            }
+        } else {
+            scope.launch { sheetState.expand() }.invokeOnCompletion {
+                if (sheetState.isVisible) {
+                    showLoginModal = true
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -81,7 +108,7 @@ fun ProfileView(onBack: () -> Unit, onNavigateToStatistics: () -> Unit) {
                             Text("Statistics", style = MaterialTheme.typography.bodyLargeEmphasized)
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = "User icon"
+                                contentDescription = "Chevron right"
                             )
                         }
                     })
@@ -91,13 +118,26 @@ fun ProfileView(onBack: () -> Unit, onNavigateToStatistics: () -> Unit) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Logout", style = MaterialTheme.typography.bodyLargeEmphasized)
+                        Text("Login", style = MaterialTheme.typography.bodyLargeEmphasized)
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                             contentDescription = "User icon"
                         )
                     }
                 })
+//                ListItem(order = ListItemOrder.LAST, onClick = {}, content = {
+//                    Row(
+//                        modifier = Modifier.fillMaxWidth(),
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        horizontalArrangement = Arrangement.SpaceBetween
+//                    ) {
+//                        Text("Logout", style = MaterialTheme.typography.bodyLargeEmphasized)
+//                        Icon(
+//                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+//                            contentDescription = "User icon"
+//                        )
+//                    }
+//                })
             }
         }
     }
