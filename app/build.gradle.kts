@@ -32,7 +32,7 @@ android {
 
         // Use a fallback empty string if the key doesn't exist to prevent build crashes
         val clientId = properties.getProperty("FIREBASE_SERVER_CLIENT_ID") ?: ""
-        resValue("string", "FIREBASE_SERVER_CLIENT_ID", "\"$clientId\"")
+        resValue("string", "FIREBASE_SERVER_CLIENT_ID", clientId)
     }
 
     buildTypes {

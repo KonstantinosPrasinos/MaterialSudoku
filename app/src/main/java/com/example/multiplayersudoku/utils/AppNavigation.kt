@@ -69,7 +69,7 @@ fun AppNavigation() {
                     navController.navigate("${AppView.SUDOKU_VIEW.name}/${gameSettings.difficulty.name}/${gameSettings.mistakes}/${gameSettings.hints}")
                 },
                 onNavigateToProfile = {
-                    navController.navigate(AppView.STATISTICS_VIEW.name)
+                    navController.navigate(AppView.PROFILE_VIEW.name)
                 },
             )
         }

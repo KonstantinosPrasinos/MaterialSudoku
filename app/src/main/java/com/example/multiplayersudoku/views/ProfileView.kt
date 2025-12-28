@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.example.multiplayersudoku.components.List.List
 import com.example.multiplayersudoku.components.List.ListItem
 import com.example.multiplayersudoku.components.List.ListItemOrder
+import com.example.multiplayersudoku.components.SignInModal
 import com.example.multiplayersudoku.components.UserIcon
 import kotlinx.coroutines.launch
 
@@ -53,11 +54,8 @@ fun ProfileView(onBack: () -> Unit, onNavigateToStatistics: () -> Unit) {
                 }
             }
         } else {
-            scope.launch { sheetState.expand() }.invokeOnCompletion {
-                if (sheetState.isVisible) {
-                    showLoginModal = true
-                }
-            }
+            showLoginModal = true
+//            scope.launch { sheetState.expand() }
         }
     }
 
@@ -112,7 +110,9 @@ fun ProfileView(onBack: () -> Unit, onNavigateToStatistics: () -> Unit) {
                             )
                         }
                     })
-                ListItem(order = ListItemOrder.LAST, onClick = {}, content = {
+                ListItem(order = ListItemOrder.LAST, onClick = {
+                    toggleLoginBottomSheet()
+                }, content = {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -120,24 +120,14 @@ fun ProfileView(onBack: () -> Unit, onNavigateToStatistics: () -> Unit) {
                     ) {
                         Text("Login", style = MaterialTheme.typography.bodyLargeEmphasized)
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                            imageVector = Icons.AutoMirrored.Filled.Login,
                             contentDescription = "User icon"
                         )
                     }
                 })
-//                ListItem(order = ListItemOrder.LAST, onClick = {}, content = {
-//                    Row(
-//                        modifier = Modifier.fillMaxWidth(),
-//                        verticalAlignment = Alignment.CenterVertically,
-//                        horizontalArrangement = Arrangement.SpaceBetween
-//                    ) {
-//                        Text("Logout", style = MaterialTheme.typography.bodyLargeEmphasized)
-//                        Icon(
-//                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-//                            contentDescription = "User icon"
-//                        )
-//                    }
-//                })
+                if (showLoginModal) {
+                    SignInModal(onDismissRequest = { toggleLoginBottomSheet() }, sheetState)
+                }
             }
         }
     }
