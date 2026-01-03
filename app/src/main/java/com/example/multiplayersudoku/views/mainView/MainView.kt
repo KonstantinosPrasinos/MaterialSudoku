@@ -1,4 +1,4 @@
-package com.example.multiplayersudoku.views
+package com.example.multiplayersudoku.views.mainView
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,14 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -28,6 +24,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,10 +34,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.components.ConnectedButtonSelectionGroup.ConnectedSelectionGroup
 import com.example.multiplayersudoku.components.ConnectedButtonSelectionGroup.ConnectedSelectionGroupOption
 import com.example.multiplayersudoku.components.DifficultyPicker
+import com.example.multiplayersudoku.components.UserIcon
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
@@ -49,6 +48,7 @@ fun MainView(
     onNavigateToSudoku: (gameSettings: GameSettings) -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
+    val viewModel: MainViewModel = hiltViewModel()
     val layoutDirection = LocalLayoutDirection.current
 
     val scope = rememberCoroutineScope()
@@ -62,6 +62,8 @@ fun MainView(
 
     val hintsOptions = (1..GameSettings.maxHints).map { it.toString() }
     var selectedHintsOption by remember { mutableStateOf(hintsOptions[0]) }
+
+    val user by viewModel.currentUser.collectAsState()
 
     fun startSoloGame() {
         val gameSettings = GameSettings()
@@ -86,10 +88,18 @@ fun MainView(
                 ),
                 title = {},
                 actions = {
-                    IconButton(onClick = { onNavigateToProfile() }) {
-                        Icon(
-                            imageVector = Icons.Filled.AccountCircle,
-                            contentDescription = "Bar chart icon"
+                    Surface(
+                        shape = RoundedCornerShape(
+                            topStart = 52.dp,
+                            bottomStart = 52.dp
+                        ),
+                        tonalElevation = 3.dp
+                    ) {
+                        UserIcon(
+                            photoUrl = if (user != null) user?.photoUrl.toString() else null,
+                            size = 36.dp,
+                            onClick = { onNavigateToProfile() },
+                            modifier = Modifier.padding(8.dp)
                         )
                     }
                 },

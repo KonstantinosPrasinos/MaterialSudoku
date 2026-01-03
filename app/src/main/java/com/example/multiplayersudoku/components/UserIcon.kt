@@ -1,45 +1,48 @@
 package com.example.multiplayersudoku.components
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ButtonDefaults.elevation
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun UserIcon(
-    displayName: String
+    photoUrl: String? = null,
+    modifier: Modifier = Modifier,
+    size: Dp = 120.dp,
+    onClick: () -> Unit = {}
 ) {
     Surface(
-        color = MaterialTheme.colors.primary,
-        elevation = 4.dp,
-        shape = RoundedCornerShape(100.dp),
-        modifier = Modifier
-            .width(120.dp)
-            .height(120.dp)
+        shadowElevation = if (photoUrl !== null) 4.dp else 0.dp,
+        shape = RoundedCornerShape(size),
+        onClick = onClick,
+        modifier = modifier
+            .size(size)
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                displayName[0].toString(),
-                color = MaterialTheme.colors.onPrimary,
-                style = androidx.compose.material3.MaterialTheme.typography.displayMediumEmphasized
+        if (photoUrl !== null) {
+            val highResPhotoUrl = photoUrl.replace("s96-c", "s400-c")
+            AsyncImage(
+                model = highResPhotoUrl,
+                contentDescription = "Profile picture",
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Filled.AccountCircle,
+                contentDescription = "Account circle",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.fillMaxSize()
             )
         }
     }

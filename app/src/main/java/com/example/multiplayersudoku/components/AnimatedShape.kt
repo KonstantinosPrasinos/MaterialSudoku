@@ -4,22 +4,27 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StampedPathEffectStyle.Companion.Morph
 import androidx.compose.ui.graphics.asComposePath
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.toPath
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun AnimatedShape(shape1: RoundedPolygon, shape2: RoundedPolygon) {
+fun AnimatedShape(
+    shape1: RoundedPolygon,
+    shape2: RoundedPolygon,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit
+) {
     val infiniteAnimation = rememberInfiniteTransition(label = "infinite animation")
     val morphProgress = infiniteAnimation.animateFloat(
         initialValue = 0f,
@@ -32,7 +37,7 @@ fun AnimatedShape(shape1: RoundedPolygon, shape2: RoundedPolygon) {
     )
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .drawWithCache {
                 val morph = Morph(start = shape1, end = shape2)
                 val morphPath = morph
@@ -43,6 +48,8 @@ fun AnimatedShape(shape1: RoundedPolygon, shape2: RoundedPolygon) {
                     drawPath(morphPath, color = Color.Black)
                 }
             }
-            .fillMaxSize()
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center,
+        content = content
     )
 }

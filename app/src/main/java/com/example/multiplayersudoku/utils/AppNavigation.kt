@@ -10,8 +10,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
-import com.example.multiplayersudoku.views.MainView
-import com.example.multiplayersudoku.views.ProfileView
+import com.example.multiplayersudoku.views.mainView.MainView
+import com.example.multiplayersudoku.views.profileView.ProfileView
 import com.example.multiplayersudoku.views.SudokuView.SudokuView
 import com.example.multiplayersudoku.views.statisticsView.StatisticsView
 

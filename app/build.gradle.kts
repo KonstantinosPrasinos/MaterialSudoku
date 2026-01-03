@@ -45,11 +45,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
         compose = true
@@ -84,6 +81,10 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("androidx.compose.material:material-icons-extended")
 
+    implementation(libs.androidx.room.ktx) // This pulls runtime and ktx
+
+    // IMPORTANT: Make sure you add these to libs.versions.toml if they are missing
+    // Or temporarily use the same version string as the TOML:
     val room_version = "2.8.4"
 
     implementation("androidx.room:room-runtime:$room_version")
@@ -111,8 +112,8 @@ dependencies {
     implementation("androidx.room:room-paging:$room_version")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    ksp("com.google.dagger:hilt-android-compiler:2.51.1") // Use KSP
+    implementation("com.google.dagger:hilt-android:2.57.1")
+    ksp("com.google.dagger:hilt-android-compiler:2.57.1") // Use KSP
 
     // For Compose + Hilt
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
@@ -121,12 +122,17 @@ dependencies {
     // Import the BoM for the Firebase platform
     implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
 
-    // Add the dependency for the Firebase Authentication library
+    // Add the dependency for the Firebase Authentication library and firestore
     // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
 
     // Also add the dependencies for the Credential Manager libraries and specify their versions
     implementation("androidx.credentials:credentials:1.3.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
+    // Async image
+    implementation("io.coil-kt.coil3:coil-compose:3.3.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
 }
