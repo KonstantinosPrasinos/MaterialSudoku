@@ -15,8 +15,10 @@ class SudokuViewModel @Inject constructor(
 
     // Converts the Flow into a StateFlow that the UI can observe
     fun onGameFinished(result: GameResult) {
+        // Add the result to local state and firebase
         viewModelScope.launch {
             repository.saveResult(result)
+            repository.saveResultToFirestore(result)
         }
     }
 }

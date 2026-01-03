@@ -1,5 +1,7 @@
 package com.example.multiplayersudoku.views.profileView
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,8 +15,8 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
@@ -48,7 +50,11 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileView(onBack: () -> Unit, onNavigateToStatistics: () -> Unit) {
+fun ProfileView(
+    onBack: () -> Unit, onNavigateToStatistics: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope
+) {
     val viewModel: ProfileViewModel = hiltViewModel()
     var showLoginModal by remember { mutableStateOf(false) }
     var showLogoutConfirmModal by remember { mutableStateOf(false) }
@@ -69,114 +75,121 @@ fun ProfileView(onBack: () -> Unit, onNavigateToStatistics: () -> Unit) {
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {},
-                navigationIcon = {
-                    TooltipBox(
-                        positionProvider =
-                            TooltipDefaults.rememberTooltipPositionProvider(
-                                TooltipAnchorPosition.Above
-                            ),
-                        tooltip = { PlainTooltip { Text("Menu") } },
-                        state = rememberTooltipState(),
-                    ) {
-                        IconButton(onClick = { onBack() }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
+    with(sharedTransitionScope) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {},
+                    navigationIcon = {
+                        TooltipBox(
+                            positionProvider =
+                                TooltipDefaults.rememberTooltipPositionProvider(
+                                    TooltipAnchorPosition.Above
+                                ),
+                            tooltip = { PlainTooltip { Text("Menu") } },
+                            state = rememberTooltipState(),
+                        ) {
+                            FilledTonalIconButton(onClick = { onBack() }) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back"
+                                )
+                            }
                         }
-                    }
-                },
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxWidth()
-        ) {
-            UserIcon(photoUrl = if (user != null) user?.photoUrl.toString() else null)
-            Text(
-                user?.displayName.toString(),
-                style = MaterialTheme.typography.headlineMediumEmphasized,
-                color = if (user != null) MaterialTheme.colorScheme.onSurface else Color.Transparent
-            )
-            List(padding = 10.dp) {
-                ListItem(
-                    order = ListItemOrder.FIRST,
-                    onClick = {
-                        onNavigateToStatistics()
                     },
-                    content = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Statistics", style = MaterialTheme.typography.bodyLargeEmphasized)
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = "Chevron right"
-                            )
-                        }
-                    })
-                if (user == null) {
-                    ListItem(order = ListItemOrder.LAST, onClick = {
-                        toggleLoginBottomSheet()
-                    }, content = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Login", style = MaterialTheme.typography.bodyLargeEmphasized)
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Login,
-                                contentDescription = "Log in icon"
-                            )
-                        }
-                    })
-                }
-                if (user !== null) {
-                    ListItem(order = ListItemOrder.LAST, onClick = {
-                        showLogoutConfirmModal = true
-                    }, content = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Log out", style = MaterialTheme.typography.bodyLargeEmphasized)
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Logout,
-                                contentDescription = "Log out icon"
-                            )
-                        }
-                    })
-                }
-                if (showLoginModal) {
-                    SignInModal(onDismissRequest = { toggleLoginBottomSheet() }, sheetState, snackbarHostState)
-                }
-                if (showLogoutConfirmModal) {
-                    AlertDialog(
-                        onDismissRequest = { showLogoutConfirmModal = false },
-                        title = { Text("Logout?") },
-                        text = { Text("Are you sure you want to log out? This will keep your progress locally but you can reset it later") },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                showLogoutConfirmModal = false
-                                viewModel.signOut()
-                            }) { Text("Confirm") }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showLogoutConfirmModal = false }) { Text("Cancel") }
-                        }
+                )
+            }
+        ) { innerPadding ->
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxWidth()
+            ) {
+                UserIcon(
+                    photoUrl = if (user != null) user?.photoUrl.toString() else null, modifier = Modifier.sharedElement(
+                        rememberSharedContentState(key = "account-circle"),
+                        animatedVisibilityScope = animatedVisibilityScope
                     )
+                )
+                Text(
+                    user?.displayName.toString(),
+                    style = MaterialTheme.typography.headlineMediumEmphasized,
+                    color = if (user != null) MaterialTheme.colorScheme.onSurface else Color.Transparent
+                )
+                List(padding = 10.dp) {
+                    ListItem(
+                        order = ListItemOrder.FIRST,
+                        onClick = {
+                            onNavigateToStatistics()
+                        },
+                        content = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Statistics", style = MaterialTheme.typography.bodyLargeEmphasized)
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    contentDescription = "Chevron right"
+                                )
+                            }
+                        })
+                    if (user == null) {
+                        ListItem(order = ListItemOrder.LAST, onClick = {
+                            toggleLoginBottomSheet()
+                        }, content = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Login", style = MaterialTheme.typography.bodyLargeEmphasized)
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Login,
+                                    contentDescription = "Log in icon"
+                                )
+                            }
+                        })
+                    }
+                    if (user !== null) {
+                        ListItem(order = ListItemOrder.LAST, onClick = {
+                            showLogoutConfirmModal = true
+                        }, content = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Log out", style = MaterialTheme.typography.bodyLargeEmphasized)
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                                    contentDescription = "Log out icon"
+                                )
+                            }
+                        })
+                    }
+                    if (showLoginModal) {
+                        SignInModal(onDismissRequest = { toggleLoginBottomSheet() }, sheetState, snackbarHostState)
+                    }
+                    if (showLogoutConfirmModal) {
+                        AlertDialog(
+                            onDismissRequest = { showLogoutConfirmModal = false },
+                            title = { Text("Logout?") },
+                            text = { Text("Are you sure you want to log out? This will keep your progress locally but you can reset it later") },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    showLogoutConfirmModal = false
+                                    viewModel.signOut()
+                                }) { Text("Confirm") }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showLogoutConfirmModal = false }) { Text("Cancel") }
+                            }
+                        )
+                    }
                 }
             }
         }
