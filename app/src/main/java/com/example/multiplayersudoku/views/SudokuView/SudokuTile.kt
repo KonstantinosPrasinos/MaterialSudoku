@@ -1,6 +1,12 @@
 package com.example.multiplayersudoku.views.SudokuView
 
 import android.os.Debug
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -10,14 +16,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.multiplayersudoku.classes.SudokuTileData
@@ -25,6 +39,8 @@ import com.example.multiplayersudoku.utils.bottomBorder
 import com.example.multiplayersudoku.utils.leftBorder
 import com.example.multiplayersudoku.utils.rightBorder
 import com.example.multiplayersudoku.utils.topBorder
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun Fixed3x3Grid(notedNumbers: MutableList<Int>, textColor: Color) {
@@ -66,6 +82,38 @@ fun RowScope.GridCell(item: Int, isNoted: Boolean = false, textColor: Color) {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ExpandingBox(isVisible: Boolean) {
+    // 1. Create the animatable scale value
+    val scale = remember { Animatable(0f) }
+
+    // 2. Watch for the isVisible toggle
+    LaunchedEffect(isVisible) {
+        if (isVisible) {
+            // Expand with a bounce
+            scale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
+            )
+            // Wait a moment (optional)
+            delay(1000)
+            // Collapse back down
+            scale.animateTo(targetValue = 0f)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .graphicsLayer(scaleX = scale.value, scaleY = scale.value)
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.secondaryContainer, MaterialShapes.SoftBurst.toShape()),
+        contentAlignment = Alignment.Center,
+        content = {}
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SudokuTile(
     tileData: SudokuTileData,
@@ -75,6 +123,7 @@ fun SudokuTile(
     onClick: () -> Unit,
     selectedNumber: Int?,
     isPaused: Boolean = false,
+    isCompleted: Boolean = true,
 ) {
     // Configure the background color
     val isSelected =
@@ -89,7 +138,6 @@ fun SudokuTile(
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
 
-    // Configure the text color
     val textColor = when {
         tileData.value != null && tileData.isMistake -> MaterialTheme.colorScheme.error
         isSelected || numberSelected -> MaterialTheme.colorScheme.onPrimary
@@ -167,6 +215,7 @@ fun SudokuTile(
             notedNumbers = tileData.notes,
             textColor = textColor
         )
+        ExpandingBox(isVisible = tileData.isCompleted)
         if (!isPaused && tileData.value != null) Text(
             text = tileData.value.toString(),
             color = textColor,

@@ -8,4 +8,5 @@ data class SudokuTileData(
     val isSelected: Boolean = false,
     val isMistake: Boolean = false,
     var notes: MutableList<Int> = mutableListOf(),
+    var isCompleted: Boolean = false
 )

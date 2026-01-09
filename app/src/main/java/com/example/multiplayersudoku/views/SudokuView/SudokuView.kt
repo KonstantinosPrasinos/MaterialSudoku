@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -46,6 +47,7 @@ import com.example.multiplayersudoku.utils.checkRow
 import com.example.multiplayersudoku.utils.formatDifficulty
 import com.example.multiplayersudoku.utils.updateNotes
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -124,8 +126,10 @@ fun EndDialogText(difficulty: Difficulty, seconds: Int, userHasWon: Boolean) {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
+
     val viewModel: SudokuViewModel = hiltViewModel()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val scope = rememberCoroutineScope()
 
     var showExitDialog by remember { mutableStateOf(false) }
     var showGameEndDialog by remember { mutableStateOf(false) }
@@ -236,6 +240,36 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         return !emptyTileFound
     }
 
+    fun checkRow(board: List<List<SudokuTileData>>, tile: SudokuTileData): Boolean {
+        val row = board[tile.rowIndex!!]
+
+        var emptyTileFound = false;
+
+        for (tile in row) {
+            if (tile.value == null || tile.isMistake) {
+                emptyTileFound = true
+                break
+            }
+        }
+
+        return !emptyTileFound
+    }
+
+    fun checkCol(board: List<List<SudokuTileData>>, tile: SudokuTileData): Boolean {
+        val col = board.map { it[tile.colIndex!!] }
+
+        var emptyTileFound = false;
+
+        for (tile in col) {
+            if (tile.value == null || tile.isMistake) {
+                emptyTileFound = true
+                break
+            }
+        }
+
+        return !emptyTileFound
+    }
+
     fun eraseSelectedTile() {
         val row: Int? = selectedTileIndices[0]
         val col: Int? = selectedTileIndices[1]
@@ -291,6 +325,30 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         viewModel.onGameFinished(result)
 
         toggleGameEndDialog()
+    }
+
+    fun runAnimations(tileToUpdate: SudokuTileData, rowCompleted: Boolean, colCompleted: Boolean) {
+        val rowIndex = tileToUpdate.rowIndex!!
+        val colIndex = tileToUpdate.colIndex!!
+
+        scope.launch {
+            for (i in 0 until 9) {
+                val newBoard = sudokuBoard.board.map { it.toMutableList() }
+
+                if (rowCompleted) {
+                    val tileToAnimate = newBoard[rowIndex][i]
+                    newBoard[rowIndex][i] = tileToAnimate.copy(isCompleted = true)
+                }
+                if (colCompleted) {
+                    val tileToAnimate = newBoard[i][colIndex]
+                    newBoard[i][colIndex] = tileToAnimate.copy(isCompleted = true)
+                }
+
+                // Assign the new board state to trigger recomposition
+                sudokuBoard = sudokuBoard.copy(board = newBoard)
+                delay(50) // A shorter delay often looks better for animations
+            }
+        }
     }
 
     fun setTileValue(
@@ -359,6 +417,14 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         sudokuBoard = sudokuBoard.copy(
             board = newBoard.map { it }
         )
+
+        // do animations here
+        val rowCompleted = checkRow(newBoard, tileToUpdate)
+        val colCompleted = checkCol(newBoard, tileToUpdate)
+
+        if (rowCompleted || colCompleted) {
+            runAnimations(tileToUpdate, rowCompleted, colCompleted)
+        }
     }
 
     fun selectTile(row: Int?, col: Int?) {
