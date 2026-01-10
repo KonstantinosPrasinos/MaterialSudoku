@@ -240,10 +240,31 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         return !emptyTileFound
     }
 
+    fun checkGrid(board: List<List<SudokuTileData>>, tile: SudokuTileData): Boolean {
+        val startRow = tile.rowIndex!! - (tile.rowIndex % 3)
+        val startCol = tile.colIndex!! - (tile.colIndex!! % 3)
+        var emptyTileFound = false
+
+        for (i in startRow until startRow + 3) {
+            for (j in startCol until startCol + 3) {
+                val gridTile = board[i][j]
+                if (gridTile.value == null || gridTile.isMistake) {
+                    emptyTileFound = true
+                    break
+                }
+            }
+            if (emptyTileFound) {
+                break
+            }
+        }
+
+        return !emptyTileFound
+    }
+
     fun checkRow(board: List<List<SudokuTileData>>, tile: SudokuTileData): Boolean {
         val row = board[tile.rowIndex!!]
 
-        var emptyTileFound = false;
+        var emptyTileFound = false
 
         for (tile in row) {
             if (tile.value == null || tile.isMistake) {
@@ -258,7 +279,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
     fun checkCol(board: List<List<SudokuTileData>>, tile: SudokuTileData): Boolean {
         val col = board.map { it[tile.colIndex!!] }
 
-        var emptyTileFound = false;
+        var emptyTileFound = false
 
         for (tile in col) {
             if (tile.value == null || tile.isMistake) {
@@ -327,9 +348,29 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         toggleGameEndDialog()
     }
 
-    fun runAnimations(tileToUpdate: SudokuTileData, rowCompleted: Boolean, colCompleted: Boolean) {
+    fun runAnimations(
+        tileToUpdate: SudokuTileData,
+        rowCompleted: Boolean,
+        colCompleted: Boolean,
+        gridCompleted: Boolean
+    ) {
         val rowIndex = tileToUpdate.rowIndex!!
         val colIndex = tileToUpdate.colIndex!!
+
+        val startRow = rowIndex - (rowIndex % 3)
+        val startCol = colIndex - (colIndex % 3)
+
+        val tilesToAnimate = mutableListOf<Pair<Int, Int>>()
+
+        if (gridCompleted) {
+            for (i in startRow until startRow + 3) {
+                for (j in startCol until startCol + 3) {
+                    tilesToAnimate.add(Pair(i, j))
+                }
+            }
+        }
+
+        val animatedTiles = mutableListOf<Pair<Int, Int>>()
 
         scope.launch {
             for (i in 0 until 9) {
@@ -338,16 +379,35 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
                 if (rowCompleted) {
                     val tileToAnimate = newBoard[rowIndex][i]
                     newBoard[rowIndex][i] = tileToAnimate.copy(isCompleted = true)
+                    animatedTiles.add(Pair(rowIndex, i))
                 }
                 if (colCompleted) {
                     val tileToAnimate = newBoard[i][colIndex]
                     newBoard[i][colIndex] = tileToAnimate.copy(isCompleted = true)
+                    animatedTiles.add(Pair(i, colIndex))
+                }
+                if (gridCompleted) {
+                    val tileToAnimate = newBoard[tilesToAnimate[i].first][tilesToAnimate[i].second]
+                    newBoard[tilesToAnimate[i].first][tilesToAnimate[i].second] = tileToAnimate.copy(isCompleted = true)
+                    animatedTiles.add(tilesToAnimate[i])
                 }
 
                 // Assign the new board state to trigger recomposition
                 sudokuBoard = sudokuBoard.copy(board = newBoard)
                 delay(50) // A shorter delay often looks better for animations
             }
+
+            // Reset the animated tiles so that they can be animated again
+            val remainingTime: Long = 9 * 500 - 9 * 50
+            delay(remainingTime)
+            val newBoard = sudokuBoard.board.map { it.toMutableList() }
+
+            for (tile in animatedTiles) {
+                val tileToAnimate = newBoard[tile.first][tile.second]
+                newBoard[tile.first][tile.second] = tileToAnimate.copy(isCompleted = false)
+            }
+
+            sudokuBoard = sudokuBoard.copy(board = newBoard)
         }
     }
 
@@ -362,6 +422,8 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         // Create a deep copy of the board to modify it
         var newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
         val tileToUpdate = newBoard[row][col]
+
+        var userHasWon = false
 
         // Check if the tile is editable before changing it
         if (!tileToUpdate.isEditable) return
@@ -421,9 +483,10 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         // do animations here
         val rowCompleted = checkRow(newBoard, tileToUpdate)
         val colCompleted = checkCol(newBoard, tileToUpdate)
+        val gridCompleted = checkGrid(newBoard, tileToUpdate)
 
-        if (rowCompleted || colCompleted) {
-            runAnimations(tileToUpdate, rowCompleted, colCompleted)
+        if (rowCompleted || colCompleted || gridCompleted) {
+            runAnimations(tileToUpdate, rowCompleted, colCompleted, gridCompleted)
         }
     }
 

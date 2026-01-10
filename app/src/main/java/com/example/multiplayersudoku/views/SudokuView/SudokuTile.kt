@@ -1,12 +1,9 @@
 package com.example.multiplayersudoku.views.SudokuView
 
-import android.os.Debug
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -26,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -97,9 +93,12 @@ fun ExpandingBox(isVisible: Boolean) {
                 animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
             )
             // Wait a moment (optional)
-            delay(1000)
+            delay(500)
             // Collapse back down
-            scale.animateTo(targetValue = 0f)
+            scale.animateTo(
+                targetValue = 0f,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
+            )
         }
     }
 
@@ -107,7 +106,7 @@ fun ExpandingBox(isVisible: Boolean) {
         modifier = Modifier
             .graphicsLayer(scaleX = scale.value, scaleY = scale.value)
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.secondaryContainer, MaterialShapes.SoftBurst.toShape()),
+            .background(MaterialTheme.colorScheme.secondary, MaterialShapes.SoftBurst.toShape()),
         contentAlignment = Alignment.Center,
         content = {}
     )
@@ -123,14 +122,12 @@ fun SudokuTile(
     onClick: () -> Unit,
     selectedNumber: Int?,
     isPaused: Boolean = false,
-    isCompleted: Boolean = true,
 ) {
-    // Configure the background color
     val isSelected =
         (selectedTileIndices[0] == tileData.rowIndex && selectedTileIndices[1] == tileData.colIndex)
     val groupSelected =
         (selectedTileIndices[0] == tileData.rowIndex || selectedTileIndices[1] == tileData.colIndex)
-    val numberSelected = selectedNumber != null && selectedNumber == tileData.value;
+    val numberSelected = selectedNumber != null && selectedNumber == tileData.value
 
     val color = when {
         isSelected || numberSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
@@ -138,16 +135,48 @@ fun SudokuTile(
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
 
-    val textColor = when {
+    val defaultTextColor = when {
         tileData.value != null && tileData.isMistake -> MaterialTheme.colorScheme.error
         isSelected || numberSelected -> MaterialTheme.colorScheme.onPrimary
         tileData.isEditable && tileData.value != null -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
+    val completedTextColor = MaterialTheme.colorScheme.onPrimary
+
+    val textColor = remember { Animatable(defaultTextColor) }
+
+    LaunchedEffect(defaultTextColor) {
+        textColor.snapTo(defaultTextColor)
+    }
+
+    LaunchedEffect(tileData.isCompleted) {
+        if (tileData.isCompleted) {
+            launch {
+                textColor.animateTo(
+                    targetValue = completedTextColor,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
+                )
+            }
+
+
+            delay(700)
+
+            launch {
+                textColor.animateTo(
+                    targetValue = defaultTextColor,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
+                )
+            }
+        } else {
+            launch {
+                textColor.snapTo(defaultTextColor)
+            }
+        }
+    }
 
     // Add the borders
-    val thinBorderWidth = 0.5.dp;
-    val thickBorderWidth = 1.dp;
+    val thinBorderWidth = 0.5.dp
+    val thickBorderWidth = 1.dp
     val thinBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.37f)
     val thickBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.67f)
 
@@ -213,12 +242,12 @@ fun SudokuTile(
     ) {
         if (tileData.value == null) Fixed3x3Grid(
             notedNumbers = tileData.notes,
-            textColor = textColor
+            textColor = textColor.value
         )
         ExpandingBox(isVisible = tileData.isCompleted)
         if (!isPaused && tileData.value != null) Text(
             text = tileData.value.toString(),
-            color = textColor,
+            color = textColor.value,
             fontWeight = FontWeight.SemiBold,
             fontSize = MaterialTheme.typography.headlineSmall.fontSize
         )
