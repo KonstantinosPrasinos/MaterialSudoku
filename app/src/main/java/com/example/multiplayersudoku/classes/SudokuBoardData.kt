@@ -24,10 +24,25 @@ data class SudokuBoardData(
         fun generateRandom(difficulty: Difficulty = Difficulty.EASY): SudokuBoardData {
             return SudokuBoardData(generateBoard(difficulty))
         }
+
+        fun generateEmpty(): SudokuBoardData {
+            val board = List(9) { row ->
+                List(9) { column ->
+                    SudokuTileData(
+                        value = null,
+                        isEditable = false, // Or true, depending on your logic
+                        rowIndex = row,
+                        colIndex = column
+                    )
+                }
+            }
+
+            return SudokuBoardData(board)
+        }
     }
 
     fun getAsNumberList(): List<List<Int>> {
-        return board.map {row -> row.map({it.value ?: 0})}
+        return board.map { row -> row.map({ it.value ?: 0 }) }
     }
 }
 
