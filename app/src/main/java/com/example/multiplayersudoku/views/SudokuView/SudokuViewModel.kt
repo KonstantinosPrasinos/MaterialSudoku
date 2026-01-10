@@ -393,6 +393,11 @@ class SudokuViewModel @Inject constructor(
         tileToUpdate = newBoard[row][col]
 
         for (i in 1..9) {
+            val isMistake = checkForMistakes(i, row, col)
+            if (isMistake) {
+                continue
+            }
+
             newBoard[row][col] = tileToUpdate.copy(value = i)
 
             val solvedBoard = attemptSolve(newBoard)
