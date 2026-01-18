@@ -11,16 +11,21 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
+import com.example.multiplayersudoku.views.SudokuView.SudokuView
+import com.example.multiplayersudoku.views.joinRoomView.JoinRoomView
+import com.example.multiplayersudoku.views.lobbyView.LobbyArgs
+import com.example.multiplayersudoku.views.lobbyView.LobbyView
 import com.example.multiplayersudoku.views.mainView.MainView
 import com.example.multiplayersudoku.views.profileView.ProfileView
-import com.example.multiplayersudoku.views.SudokuView.SudokuView
 import com.example.multiplayersudoku.views.statisticsView.StatisticsView
 
 enum class AppView {
     MAIN,
     SUDOKU_VIEW,
     PROFILE_VIEW,
-    STATISTICS_VIEW
+    STATISTICS_VIEW,
+    JOIN_ROOM_VIEW,
+    LOBBY_VIEW
 }
 
 @Composable
@@ -31,6 +36,7 @@ fun AppNavigation() {
     val DIFFICULTY_ARG = "difficulty"
     val MISTAKES_ARG = "mistakes"
     val HINTS_ARG = "hints"
+    val ROOM_CODE_ARG = "whoops"
 
     // NavHost links the NavController to a navigation graph
     SharedTransitionLayout() {
@@ -72,6 +78,9 @@ fun AppNavigation() {
                     },
                     onNavigateToProfile = {
                         navController.navigate(AppView.PROFILE_VIEW.name)
+                    },
+                    onNavigateToJoinRoom = {
+                        navController.navigate(AppView.JOIN_ROOM_VIEW.name)
                     },
                     sharedTransitionScope = this@SharedTransitionLayout,
                     animatedVisibilityScope = this@composable
@@ -132,6 +141,61 @@ fun AppNavigation() {
                         navController.popBackStack()
                     },
                     gameSettings = gameSettings
+                )
+            }
+
+            composable(
+                route = "${AppView.LOBBY_VIEW.name}/{$DIFFICULTY_ARG}/{$ROOM_CODE_ARG}",
+                arguments = listOf(
+                    navArgument(DIFFICULTY_ARG) { type = NavType.StringType },
+                    navArgument(ROOM_CODE_ARG) { type = NavType.StringType }
+                ),
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                popEnterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300)
+                    )
+                },
+                popExitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300)
+                    )
+                }
+            ) { backStackEntry ->
+                val difficultyString = backStackEntry.arguments?.getString(DIFFICULTY_ARG)
+                val roomCodeString = backStackEntry.arguments?.getString(ROOM_CODE_ARG)
+
+
+                val difficultyObject = when {
+                    difficultyString == "EASY" -> Difficulty.EASY
+                    difficultyString == "MEDIUM" -> Difficulty.MEDIUM
+                    difficultyString == "HARD" -> Difficulty.HARD
+                    else -> Difficulty.EASY
+                }
+
+                val gameSettings = GameSettings()
+                gameSettings.difficulty = difficultyObject
+
+                val lobbyArgs = LobbyArgs(gameSettings = gameSettings, roomCode = roomCodeString.toString())
+
+                LobbyView(
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    lobbyArgs = lobbyArgs
                 )
             }
 
@@ -202,6 +266,43 @@ fun AppNavigation() {
                 }
             ) {
                 StatisticsView(
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                )
+            }
+
+            composable(
+                route = AppView.JOIN_ROOM_VIEW.name,
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                popEnterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300)
+                    )
+                },
+                popExitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
+                JoinRoomView(
+                    onNavigateToLobby = { lobbyArgs ->
+                        navController.navigate("${AppView.LOBBY_VIEW.name}/${lobbyArgs.gameSettings.difficulty.name}/${lobbyArgs.roomCode}")
+                    },
                     onBack = {
                         navController.popBackStack()
                     },

@@ -49,6 +49,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainView(
     onNavigateToSudoku: (gameSettings: GameSettings) -> Unit,
+    onNavigateToJoinRoom: () -> Unit,
     onNavigateToProfile: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope
@@ -162,8 +163,7 @@ fun MainView(
                             )
                         }
                         Button(
-                            enabled = false,
-                            onClick = {},
+                            onClick = { onNavigateToJoinRoom() },
                             shapes = ButtonDefaults.shapes(),
                             modifier = Modifier
                                 .weight(1.5f)
@@ -172,7 +172,7 @@ fun MainView(
                             contentPadding = ButtonDefaults.MediumContentPadding
                         ) {
                             Text(
-                                "Play versus (coming soon)",
+                                "Play versus",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
