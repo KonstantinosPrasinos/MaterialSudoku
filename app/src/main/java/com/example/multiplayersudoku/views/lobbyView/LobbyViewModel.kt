@@ -1,5 +1,6 @@
 package com.example.multiplayersudoku.views.lobbyView
 
+import Player
 import android.content.ContentValues.TAG
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -32,8 +33,50 @@ class LobbyViewModel @Inject constructor(
     var currentUser: FirebaseUser? by mutableStateOf(null)
         private set
 
-    var roomData: RoomData? by mutableStateOf<RoomData?>(null)
+    var roomData: RoomData? by mutableStateOf(null)
         private set
+
+    var owner: Player? by mutableStateOf(null)
+        private set
+
+    var opponent: Player? by mutableStateOf(null)
+        private set
+
+
+    suspend fun initializePlayers() {
+        if (roomData == null) {
+            Log.e(TAG, "Room data is null ${roomData?.ownerPath}")
+            return
+        }
+
+        if (roomData?.ownerPath == null) {
+            Log.e(TAG, "Owner path is null")
+            return
+        }
+
+        val db = Firebase.firestore
+        val userCollection = db.collection("users")
+
+        val ownerRef = userCollection.document(roomData?.ownerPath ?: "")
+
+        try {
+            val document = ownerRef.get().await()
+
+            if (!document.exists()) return
+
+            Log.d(TAG, "Document data: ${document.data}")
+
+            owner = Player(
+                displayName = document.getString("displayName") ?: "",
+                profilePictureURL = document.getString("photoUrl") ?: "",
+                id = roomData?.ownerPath ?: ""
+            )
+
+
+        } catch (e: Exception) {
+
+        }
+    }
 
     suspend fun init(lobbyArgs: LobbyArgs) {
         database = Firebase.database.reference
@@ -44,6 +87,7 @@ class LobbyViewModel @Inject constructor(
             return
         }
 
+        // Generate the room code
         var roomCodeString: String
 
         do {
@@ -70,6 +114,8 @@ class LobbyViewModel @Inject constructor(
         val roomRef = database.child("rooms").child(roomCodeString)
         val tempRoomData =
             RoomData(gameSettings = lobbyArgs.gameSettings, roomCode = roomCodeString, ownerPath = currentUser!!.uid)
+        
+        roomData = tempRoomData
 
         database.child("rooms").child(roomCodeString).setValue(tempRoomData).await()
 
@@ -77,12 +123,17 @@ class LobbyViewModel @Inject constructor(
         val roomListener = object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 roomData = dataSnapshot.getValue(RoomData::class.java)
+                Log.d(TAG, "Value is: ${roomData?.ownerPath}")
             }
 
             override fun onCancelled(databaseError: DatabaseError) {
                 Log.w(TAG, "loadPost:onCancelled", databaseError.toException())
             }
         }
+
+        Log.d(TAG, "Value is: ${roomData?.ownerPath}")
         roomRef.addValueEventListener(roomListener)
+
+        initializePlayers()
     }
 }

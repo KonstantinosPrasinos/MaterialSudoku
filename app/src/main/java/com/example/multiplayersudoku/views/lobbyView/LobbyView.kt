@@ -1,5 +1,6 @@
 package com.example.multiplayersudoku.views.lobbyView
 
+import android.content.ClipData
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,18 +11,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -34,13 +39,21 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.components.UserIcon
+import com.example.multiplayersudoku.ui.theme.FredokaFamily
+import kotlinx.coroutines.launch
 
 class LobbyArgs(gameSettings: GameSettings, roomCode: String) {
     var gameSettings: GameSettings = GameSettings();
@@ -51,8 +64,18 @@ class LobbyArgs(gameSettings: GameSettings, roomCode: String) {
 @Composable
 fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewModel = hiltViewModel()) {
     val layoutDirection = LocalLayoutDirection.current
+    val clipboardManager = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+
+
     LaunchedEffect(Unit) {
         viewModel.init(lobbyArgs)
+    }
+
+    fun copyCode() {
+        scope.launch {
+            clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("Room code", viewModel.roomData?.roomCode)))
+        }
     }
 
     Scaffold(
@@ -94,7 +117,7 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                UserIcon {}
+                UserIcon(photoUrl = viewModel.owner?.profilePictureURL)
                 Text("vs")
                 UserIcon { }
             }
@@ -119,33 +142,64 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     TextButton(
-                        onClick = {},
+                        onClick = { copyCode() },
                         shapes = ButtonDefaults.shapes(),
                     ) {
-                        Text(viewModel.roomData?.roomCode ?: "Whoops")
+                        Text(
+                            viewModel.roomData?.roomCode ?: "Whoops",
+                            style = TextStyle(
+                                fontFamily = FredokaFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 48.sp
+                            )
+                        )
+                        Spacer(Modifier.width(16.dp))
                         Icon(
                             imageVector = Icons.Filled.ContentCopy,
-                            contentDescription = "Copy room code"
+                            contentDescription = "Copy room code",
+                            Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                         )
                     }
                     Row(
                         modifier = Modifier.padding(10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedButton(
+                        Text("Difficulty: ", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "${viewModel.roomData?.gameSettings?.difficultyName}",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMediumEmphasized
+                        )
+                        Spacer(Modifier.weight(1f))
+                        Text("Mistakes: ", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "${viewModel.roomData?.gameSettings?.mistakes}",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMediumEmphasized
+                        )
+                        Spacer(Modifier.weight(1f))
+                        Text("Hints: ", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "${viewModel.roomData?.gameSettings?.hints}",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMediumEmphasized
+                        )
+                        Spacer(Modifier.weight(1f))
+                        FilledIconButton(
                             onClick = { },
-                            shapes = ButtonDefaults.shapes(),
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = ButtonDefaults.MediumContainerHeight),
-                            contentPadding = ButtonDefaults.MediumContentPadding
+                            shapes = IconButtonDefaults.shapes(),
                         ) {
-                            Text(
-                                "Ready",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit game properties"
                             )
                         }
+                    }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                         Button(
                             onClick = { },
                             shapes = ButtonDefaults.shapes(),
