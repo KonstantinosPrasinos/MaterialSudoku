@@ -18,7 +18,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -39,9 +38,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.multiplayersudoku.classes.GameSettings
-import com.example.multiplayersudoku.components.ConnectedButtonSelectionGroup.ConnectedSelectionGroup
-import com.example.multiplayersudoku.components.ConnectedButtonSelectionGroup.ConnectedSelectionGroupOption
-import com.example.multiplayersudoku.components.DifficultyPicker
+import com.example.multiplayersudoku.components.GameSettingsBottomSheet
 import com.example.multiplayersudoku.components.UserIcon
 import kotlinx.coroutines.launch
 
@@ -180,96 +177,18 @@ fun MainView(
                     }
                 }
                 if (showPlaySoloBottomSheet) {
-                    ModalBottomSheet(
-                        onDismissRequest = {
-                            showPlaySoloBottomSheet = false
-                        },
+                    GameSettingsBottomSheet(
                         sheetState = sheetState,
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.padding(10.dp)
-                        ) {
-                            Text(
-                                "Difficulty:",
-                                style = MaterialTheme.typography.titleLargeEmphasized,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            DifficultyPicker(
-                                onDifficultySelected = { difficulty -> selectedDifficulty = difficulty },
-                                selectedDifficulty = selectedDifficulty
-                            )
-                            Text(
-                                "Max mistakes:",
-                                style = MaterialTheme.typography.titleLargeEmphasized,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            ConnectedSelectionGroup(
-                                items = mistakesOptions,
-                                selectedItem = selectedMistakesOption,
-                                onItemSelected = { selectedMistakesOption = it }, // State is updated here
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            ) { item, isSelected, shape -> // The shape is now provided here!
-
-                                // The parent no longer knows or cares how the shape is made.
-                                ConnectedSelectionGroupOption(
-                                    isSelected = isSelected,
-                                    onClick = { selectedMistakesOption = item },
-                                    shape = shape, // Simply use the provided shape
-                                    modifier = Modifier.weight(1f),
-                                ) {
-                                    //                                Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                    Text(
-                                        item,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurfaceVariant
-
-                                    )
-                                }
-                            }
-                            Text(
-                                "Max hints:",
-                                style = MaterialTheme.typography.titleLargeEmphasized,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            ConnectedSelectionGroup(
-                                items = hintsOptions,
-                                selectedItem = selectedHintsOption,
-                                onItemSelected = { selectedHintsOption = it }, // State is updated here
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            ) { item, isSelected, shape -> // The shape is now provided here!
-
-                                // The parent no longer knows or cares how the shape is made.
-                                ConnectedSelectionGroupOption(
-                                    isSelected = isSelected,
-                                    onClick = { selectedHintsOption = item },
-                                    shape = shape, // Simply use the provided shape
-                                    modifier = Modifier.weight(1f),
-                                ) {
-                                    //                                Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                    Text(
-                                        item,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurfaceVariant
-
-                                    )
-                                }
-                            }
-                            Button(
-                                onClick = { startSoloGame() },
-                                shapes = ButtonDefaults.shapes(),
-                                modifier = Modifier.fillMaxWidth(),
-                                contentPadding = ButtonDefaults.MediumContentPadding
-                            ) {
-                                Text(
-                                    "Play solo",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
-                            }
-                        }
-                    }
+                        toggleVisibility = { showPlaySoloBottomSheet = false },
+                        setDifficulty = { difficulty -> selectedDifficulty = difficulty },
+                        confirmAction = { startSoloGame() },
+                        selectedDifficulty = selectedDifficulty,
+                        selectedMistakesOption = selectedMistakesOption,
+                        setSelectedMistakesOption = { selectedMistakesOption = it.toString() },
+                        selectedHintsOption = selectedHintsOption,
+                        setSelectedHintsOption = { selectedHintsOption = it.toString() },
+                        confirmButtonText = "Play solo",
+                    )
                 }
             }
         }
