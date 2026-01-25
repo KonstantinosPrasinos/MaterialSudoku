@@ -36,6 +36,7 @@ import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.multiplayersudoku.classes.GameSettings
+import com.example.multiplayersudoku.components.GameSettingsBottomSheet
 import com.example.multiplayersudoku.components.UserIcon
 import com.example.multiplayersudoku.ui.theme.FredokaFamily
 import kotlinx.coroutines.launch
@@ -65,6 +67,7 @@ class LobbyArgs(gameSettings: GameSettings, roomCode: String) {
 fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewModel = hiltViewModel()) {
     val layoutDirection = LocalLayoutDirection.current
     val clipboardManager = LocalClipboard.current
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
 
@@ -75,6 +78,14 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
     fun copyCode() {
         scope.launch {
             clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("Room code", viewModel.roomData?.roomCode)))
+        }
+    }
+
+    fun confirmGameSettings() {
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+            if (!sheetState.isVisible) {
+                viewModel.run { confirmGameSettings() }
+            }
         }
     }
 
@@ -188,7 +199,7 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
                         )
                         Spacer(Modifier.weight(1f))
                         FilledIconButton(
-                            onClick = { },
+                            onClick = viewModel::toggleGameSettingsBottomSheetVisibility,
                             shapes = IconButtonDefaults.shapes(),
                         ) {
                             Icon(
@@ -218,6 +229,20 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
                     }
                 }
             }
+        }
+        if (viewModel.showGameSettingsBottomSheet) {
+            GameSettingsBottomSheet(
+                sheetState = sheetState,
+                toggleVisibility = viewModel::toggleGameSettingsBottomSheetVisibility,
+                setDifficulty = viewModel::setGameDifficulty,
+                selectedDifficulty = viewModel.roomData?.gameSettings?.difficulty ?: GameSettings.defaultDifficulty,
+                selectedMistakesOption = viewModel.roomData?.gameSettings?.mistakes.toString(),
+                setSelectedMistakesOption = { viewModel.setMistakes(it.toInt()) },
+                selectedHintsOption = viewModel.roomData?.gameSettings?.hints.toString(),
+                setSelectedHintsOption = { viewModel.setHints(it.toInt()) },
+                confirmButtonText = "Confirm",
+                confirmAction = ::confirmGameSettings
+            )
         }
     }
 }

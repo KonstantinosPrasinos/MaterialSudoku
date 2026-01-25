@@ -5,8 +5,8 @@ import com.google.firebase.database.IgnoreExtraProperties
 
 @IgnoreExtraProperties
 class GameSettings(
-    var hints: Int = 0,
-    var mistakes: Int = 0,
+    var hints: Int = 1,
+    var mistakes: Int = 1,
     var difficultyName: String = Difficulty.EASY.name
 ) {
     @get:Exclude
@@ -23,5 +23,13 @@ class GameSettings(
         var defaultDifficulty: Difficulty = Difficulty.EASY
     }
 
-    constructor() : this(0, 0, Difficulty.EASY.name)
+    fun copy(
+        difficulty: Difficulty = this.difficulty,
+        hints: Int = this.hints,
+        mistakes: Int = this.mistakes
+    ): GameSettings {
+        return GameSettings(hints, mistakes, difficulty.name)
+    }
+
+    constructor() : this(1, 1, Difficulty.EASY.name)
 }

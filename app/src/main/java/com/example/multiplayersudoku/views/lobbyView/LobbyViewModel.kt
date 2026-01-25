@@ -3,34 +3,36 @@ package com.example.multiplayersudoku.views.lobbyView
 import Player
 import android.content.ContentValues.TAG
 import android.util.Log
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.RoomData
+import com.example.multiplayersudoku.views.lobbyView.LobbyRepository
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.database
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.firestore
 import dagger.hilt.android.lifecycle.HiltViewModel
-import generateRandomNumber
-import kotlinx.coroutines.tasks.await
-import padWithZeros
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalMaterial3Api::class)
 @HiltViewModel
 class LobbyViewModel @Inject constructor(
+    private val repository: LobbyRepository
 ) : ViewModel() {
     private lateinit var database: DatabaseReference
     private lateinit var firestoreDatabase: FirebaseFirestore
 
     var currentUser: FirebaseUser? by mutableStateOf(null)
+        private set
+
+    var showGameSettingsBottomSheet: Boolean by mutableStateOf(false)
         private set
 
     var roomData: RoomData? by mutableStateOf(null)
@@ -42,6 +44,28 @@ class LobbyViewModel @Inject constructor(
     var opponent: Player? by mutableStateOf(null)
         private set
 
+    fun setGameDifficulty(difficulty: Difficulty) {
+        roomData = roomData?.copy(
+            gameSettings = roomData?.gameSettings?.copy(difficulty = difficulty) ?: return
+        )
+    }
+
+    fun setMistakes(mistakes: Int) {
+        roomData = roomData?.copy(
+            gameSettings = roomData?.gameSettings?.copy(mistakes = mistakes) ?: return
+        )
+    }
+
+    fun setHints(hints: Int) {
+        roomData = roomData?.copy(
+            gameSettings = roomData?.gameSettings?.copy(hints = hints) ?: return
+        )
+    }
+
+    suspend fun confirmGameSettings() {
+        toggleGameSettingsBottomSheetVisibility()
+        repository.updateGameSettings(roomData?.roomCode ?: "", roomData?.gameSettings ?: return)
+    }
 
     suspend fun initializePlayers() {
         if (roomData == null) {
@@ -54,86 +78,39 @@ class LobbyViewModel @Inject constructor(
             return
         }
 
-        val db = Firebase.firestore
-        val userCollection = db.collection("users")
-
-        val ownerRef = userCollection.document(roomData?.ownerPath ?: "")
-
-        try {
-            val document = ownerRef.get().await()
-
-            if (!document.exists()) return
-
-            Log.d(TAG, "Document data: ${document.data}")
-
-            owner = Player(
-                displayName = document.getString("displayName") ?: "",
-                profilePictureURL = document.getString("photoUrl") ?: "",
-                id = roomData?.ownerPath ?: ""
-            )
-
-
-        } catch (e: Exception) {
-
-        }
+        owner = repository.getPlayerData(roomData?.ownerPath ?: "")
     }
 
     suspend fun init(lobbyArgs: LobbyArgs) {
-        database = Firebase.database.reference
-        firestoreDatabase = Firebase.firestore
+        var code: String;
 
-        if (lobbyArgs.roomCode.isNotEmpty()) {
-            // Join the room
-            return
+        if (lobbyArgs.roomCode.isEmpty()) {
+            // The user is the owner so initialize the game
+            code = repository.generateUniqueRoomCode()
+            val user = Firebase.auth.currentUser ?: return
+            val newRoom = RoomData(lobbyArgs.gameSettings, code, user.uid)
+            repository.createRoom(newRoom)
+        } else {
+            // Queue the code to join the game
+            code = lobbyArgs.roomCode
         }
 
-        // Generate the room code
-        var roomCodeString: String
-
-        do {
-            val randomCode = generateRandomNumber(0, 9999)
-            roomCodeString = padWithZeros(randomCode, 4)
-
-            val result = database.child("rooms").child(roomCodeString).get().await()
-
-            if (result != null && result.value != null) {
-                // Room code in use
-                roomCodeString = ""
-            }
-
-            // Create the room
-        } while (roomCodeString.isEmpty())
-
-        currentUser = Firebase.auth.currentUser
-
-        if (currentUser == null) {
-            return
-        }
-
-        // Create the room
-        val roomRef = database.child("rooms").child(roomCodeString)
-        val tempRoomData =
-            RoomData(gameSettings = lobbyArgs.gameSettings, roomCode = roomCodeString, ownerPath = currentUser!!.uid)
-        
-        roomData = tempRoomData
-
-        database.child("rooms").child(roomCodeString).setValue(tempRoomData).await()
-
-        // Add reference
-        val roomListener = object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                roomData = dataSnapshot.getValue(RoomData::class.java)
-                Log.d(TAG, "Value is: ${roomData?.ownerPath}")
-            }
-
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.w(TAG, "loadPost:onCancelled", databaseError.toException())
+        // Start observing room changes
+        viewModelScope.launch {
+            repository.observeRoom(code).collect { updatedRoom ->
+                roomData = updatedRoom
+                if (owner == null) fetchOwner(updatedRoom.ownerPath)
             }
         }
-
-        Log.d(TAG, "Value is: ${roomData?.ownerPath}")
-        roomRef.addValueEventListener(roomListener)
 
         initializePlayers()
+    }
+
+    private suspend fun fetchOwner(ownerId: String) {
+        owner = repository.getPlayerData(ownerId)
+    }
+
+    fun toggleGameSettingsBottomSheetVisibility() {
+        showGameSettingsBottomSheet = !showGameSettingsBottomSheet
     }
 }

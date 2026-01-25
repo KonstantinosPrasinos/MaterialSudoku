@@ -8,4 +8,13 @@ class RoomData(
     var roomCode: String = "",
     val ownerPath: String = "",
     var opponentPath: String? = null
-)
+) {
+    fun copy(
+        gameSettings: GameSettings = this.gameSettings,
+        roomCode: String = this.roomCode,
+        ownerPath: String = this.ownerPath,
+        opponentPath: String? = this.opponentPath
+    ): RoomData {
+        return RoomData(gameSettings, roomCode, ownerPath, opponentPath)
+    }
+}
