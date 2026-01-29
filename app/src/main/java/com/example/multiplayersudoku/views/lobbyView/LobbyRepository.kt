@@ -40,7 +40,7 @@ class LobbyRepository @Inject constructor(
 
     suspend fun getPlayerData(userId: String): Player? {
         if (userId.isEmpty()) return null
-        
+
         val document = firestore.collection("users").document(userId).get().await()
         return if (document.exists()) {
             Player(
@@ -82,5 +82,17 @@ class LobbyRepository @Inject constructor(
         }
         rtdb.child("rooms").child(roomCode).addValueEventListener(listener)
         awaitClose { rtdb.child("rooms").child(roomCode).removeEventListener(listener) }
+    }
+
+    suspend fun leaveRoom(roomData: RoomData) {
+        rtdb.child("rooms").child(roomData.roomCode).child("opponentPath").setValue(null).await()
+    }
+
+    suspend fun deleteRoom(roomData: RoomData) {
+        rtdb.child("rooms").child(roomData.roomCode).removeValue().await()
+    }
+
+    suspend fun setOpponentReady(roomCode: String, userId: String) {
+        rtdb.child("rooms").child(roomCode).child("opponentPath").setValue(userId).await()
     }
 }

@@ -1,7 +1,14 @@
 package com.example.multiplayersudoku.views.lobbyView
 
 import android.content.ClipData
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,14 +17,18 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -71,7 +82,11 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        viewModel.init(lobbyArgs)
+        viewModel.init(lobbyArgs, onBack)
+    }
+
+    BackHandler(enabled = !viewModel.showExitConfirmDialog) {
+        viewModel.toggleExitDialogVisibility()
     }
 
     fun copyCode() {
@@ -83,7 +98,7 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
     fun confirmGameSettings() {
         scope.launch { sheetState.hide() }.invokeOnCompletion {
             if (!sheetState.isVisible) {
-                viewModel.run { confirmGameSettings() }
+                viewModel.run { viewModel.confirmGameSettings() }
             }
         }
     }
@@ -101,7 +116,7 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
                         tooltip = { PlainTooltip { Text("Back") } },
                         state = rememberTooltipState(),
                     ) {
-                        FilledTonalIconButton(onClick = { onBack() }) {
+                        FilledTonalIconButton(onClick = viewModel::toggleExitDialogVisibility) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back"
@@ -129,7 +144,38 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
             ) {
                 UserIcon(photoUrl = viewModel.owner?.profilePictureURL)
                 Text("vs")
-                UserIcon(photoUrl = viewModel.opponent?.profilePictureURL)
+                Box {
+                    UserIcon(photoUrl = viewModel.opponent?.profilePictureURL)
+                    this@Column.AnimatedVisibility(
+                        visible = viewModel.roomData?.opponentReady == true,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = 4.dp, y = 4.dp),
+                        enter = expandIn(
+                            // Expands from the bottom-left corner of the surface
+                            expandFrom = Alignment.BottomStart,
+                            // Start with a very small size
+                            initialSize = { androidx.compose.ui.unit.IntSize(1, 1) }
+                        ) + fadeIn(),
+                        exit = shrinkOut() + fadeOut()
+                    ) {
+                        Surface(
+                            modifier = Modifier
+                                .size(20.dp),
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            tonalElevation = 2.dp,
+                            shadowElevation = 2.dp
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Ready",
+                                modifier = Modifier.padding(2.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
             }
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -210,20 +256,41 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Button(
-                            onClick = { },
-                            shapes = ButtonDefaults.shapes(),
-                            modifier = Modifier
-                                .weight(1.5f)
-                                .heightIn(min = ButtonDefaults.MediumContainerHeight)
-                                .padding(bottom = innerPadding.calculateBottomPadding()),
-                            contentPadding = ButtonDefaults.MediumContentPadding
-                        ) {
-                            Text(
-                                "Start game",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
+                        if (viewModel.isOwner) {
+                            Button(
+                                enabled = viewModel.roomData?.opponentReady == true,
+                                onClick = viewModel::startGame,
+                                shapes = ButtonDefaults.shapes(),
+                                modifier = Modifier
+                                    .weight(1.5f)
+                                    .heightIn(min = ButtonDefaults.MediumContainerHeight)
+                                    .padding(bottom = innerPadding.calculateBottomPadding()),
+                                contentPadding = ButtonDefaults.MediumContentPadding
+                            ) {
+                                Text(
+                                    viewModel.startButtonText,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        }
+
+                        if (!viewModel.isOwner) {
+                            Button(
+                                onClick = viewModel::toggleReady,
+                                shapes = ButtonDefaults.shapes(),
+                                modifier = Modifier
+                                    .weight(1.5f)
+                                    .heightIn(min = ButtonDefaults.MediumContainerHeight)
+                                    .padding(bottom = innerPadding.calculateBottomPadding()),
+                                contentPadding = ButtonDefaults.MediumContentPadding
+                            ) {
+                                Text(
+                                    if (viewModel.roomData?.opponentReady == true) "Unready" else "Ready",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
                         }
                     }
                 }
@@ -241,6 +308,20 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
                 setSelectedHintsOption = { viewModel.setHints(it.toInt()) },
                 confirmButtonText = "Confirm",
                 confirmAction = ::confirmGameSettings
+            )
+        }
+
+        if (viewModel.showExitConfirmDialog) {
+            AlertDialog(
+                onDismissRequest = viewModel::toggleExitDialogVisibility,
+                title = { Text("Leave room?") },
+                text = { Text("Are you sure you want to leave this room?" + viewModel.exitMessage) },
+                confirmButton = {
+                    TextButton(onClick = viewModel::handleExit) { Text("Confirm") }
+                },
+                dismissButton = {
+                    TextButton(onClick = viewModel::toggleExitDialogVisibility) { Text("Cancel") }
+                }
             )
         }
     }

@@ -35,11 +35,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.components.GameSettingsBottomSheet
 import com.example.multiplayersudoku.components.UserIcon
+import com.example.multiplayersudoku.ui.theme.FredokaFamily
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
@@ -131,8 +135,12 @@ fun MainView(
                 ) {
                 Text(
                     "Material Sudoku",
-                    style = MaterialTheme.typography.displayMediumEmphasized,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    style = TextStyle(
+                        fontFamily = FredokaFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 42.sp
+                    ),
+                    color = MaterialTheme.colorScheme.secondary,
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Surface(
