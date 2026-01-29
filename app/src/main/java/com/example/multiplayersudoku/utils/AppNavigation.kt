@@ -28,6 +28,11 @@ enum class AppView {
     LOBBY_VIEW
 }
 
+object LobbyNavArgs {
+    const val DIFFICULTY = "difficulty"
+    const val ROOM_CODE = "roomCode"
+}
+
 @Composable
 fun AppNavigation() {
     // The NavController manages the navigation state and screen stack
@@ -145,10 +150,10 @@ fun AppNavigation() {
             }
 
             composable(
-                route = "${AppView.LOBBY_VIEW.name}/{$DIFFICULTY_ARG}/{$ROOM_CODE_ARG}",
+                route = "${AppView.LOBBY_VIEW.name}/{${LobbyNavArgs.DIFFICULTY}}/{${LobbyNavArgs.ROOM_CODE}}",
                 arguments = listOf(
-                    navArgument(DIFFICULTY_ARG) { type = NavType.StringType },
-                    navArgument(ROOM_CODE_ARG) { type = NavType.StringType }
+                    navArgument(LobbyNavArgs.DIFFICULTY) { type = NavType.StringType },
+                    navArgument(LobbyNavArgs.ROOM_CODE) { type = NavType.StringType }
                 ),
                 enterTransition = {
                     slideIntoContainer(
@@ -175,8 +180,8 @@ fun AppNavigation() {
                     )
                 }
             ) { backStackEntry ->
-                val difficultyString = backStackEntry.arguments?.getString(DIFFICULTY_ARG)
-                val roomCodeString = backStackEntry.arguments?.getString(ROOM_CODE_ARG)
+                val difficultyString = backStackEntry.arguments?.getString(LobbyNavArgs.DIFFICULTY)
+                val roomCodeString = backStackEntry.arguments?.getString(LobbyNavArgs.ROOM_CODE)
 
 
                 val difficultyObject = when {
@@ -300,8 +305,8 @@ fun AppNavigation() {
                 }
             ) {
                 JoinRoomView(
-                    onNavigateToLobby = { lobbyArgs ->
-                        navController.navigate("${AppView.LOBBY_VIEW.name}/${lobbyArgs.gameSettings.difficulty.name}/${lobbyArgs.roomCode}")
+                    onNavigateToLobby = { args ->
+                        navController.navigate("${AppView.LOBBY_VIEW.name}/${args.gameSettings.difficulty.name}/${args.roomCode}")
                     },
                     onBack = {
                         navController.popBackStack()

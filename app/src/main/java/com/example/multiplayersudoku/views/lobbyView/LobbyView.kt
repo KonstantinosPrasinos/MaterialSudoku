@@ -58,8 +58,8 @@ import com.example.multiplayersudoku.ui.theme.FredokaFamily
 import kotlinx.coroutines.launch
 
 class LobbyArgs(gameSettings: GameSettings, roomCode: String) {
-    var gameSettings: GameSettings = GameSettings();
-    val roomCode: String = "";
+    var gameSettings: GameSettings = gameSettings;
+    val roomCode: String = roomCode;
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -69,7 +69,6 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
     val clipboardManager = LocalClipboard.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
-
 
     LaunchedEffect(Unit) {
         viewModel.init(lobbyArgs)
@@ -130,7 +129,7 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
             ) {
                 UserIcon(photoUrl = viewModel.owner?.profilePictureURL)
                 Text("vs")
-                UserIcon { }
+                UserIcon(photoUrl = viewModel.opponent?.profilePictureURL)
             }
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),

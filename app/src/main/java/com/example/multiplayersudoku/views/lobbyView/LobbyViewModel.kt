@@ -11,7 +11,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.RoomData
-import com.example.multiplayersudoku.views.lobbyView.LobbyRepository
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
@@ -79,6 +78,9 @@ class LobbyViewModel @Inject constructor(
         }
 
         owner = repository.getPlayerData(roomData?.ownerPath ?: "")
+        if (roomData?.ownerPath != null) {
+            opponent = repository.getPlayerData(roomData?.opponentPath ?: "")
+        }
     }
 
     suspend fun init(lobbyArgs: LobbyArgs) {
@@ -93,6 +95,7 @@ class LobbyViewModel @Inject constructor(
         } else {
             // Queue the code to join the game
             code = lobbyArgs.roomCode
+            roomData = repository.joinRoom(code, Firebase.auth.currentUser?.uid ?: "")
         }
 
         // Start observing room changes

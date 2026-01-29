@@ -39,6 +39,8 @@ class LobbyRepository @Inject constructor(
     }
 
     suspend fun getPlayerData(userId: String): Player? {
+        if (userId.isEmpty()) return null
+        
         val document = firestore.collection("users").document(userId).get().await()
         return if (document.exists()) {
             Player(
@@ -55,6 +57,17 @@ class LobbyRepository @Inject constructor(
 
     suspend fun createRoom(roomData: RoomData) {
         rtdb.child("rooms").child(roomData.roomCode).setValue(roomData).await()
+    }
+
+    suspend fun joinRoom(roomCode: String, userId: String): RoomData {
+        val room = rtdb.child("rooms").child(roomCode);
+        room.child("opponentPath").setValue(userId).await();
+
+        val roomSnapshot = room.get().await();
+
+        val roomData: RoomData = roomSnapshot.getValue(RoomData::class.java) ?: throw Exception("Room data is null")
+
+        return roomData
     }
 
     fun observeRoom(roomCode: String) = callbackFlow {

@@ -48,7 +48,14 @@ class JoinRoomViewModel @Inject constructor(
                     return@launch
                 }
 
-                onNavigateToLobby(LobbyArgs(GameSettings(), roomCodeState.text.toString()))
+                if (result.child("opponentPath").value != null) {
+                    roomCodeError = "Room is full"
+                    return@launch
+                }
+
+                val roomCode = roomCodeState.text.toString()
+
+                onNavigateToLobby(LobbyArgs(GameSettings(), roomCode))
             } catch (e: Exception) {
                 Log.e("SudokuApp", "Failed to sync game: ${e.message}", e)
                 roomCodeError = "Failed to join game"
@@ -60,7 +67,7 @@ class JoinRoomViewModel @Inject constructor(
         val gameSettings = GameSettings()
         gameSettings.difficulty = selectedDifficulty
 
-        onNavigateToLobby(LobbyArgs(gameSettings, "whoops"))
+        onNavigateToLobby(LobbyArgs(gameSettings, ""))
     }
 
     fun setSelectedDifficultyState(difficulty: Difficulty) {
