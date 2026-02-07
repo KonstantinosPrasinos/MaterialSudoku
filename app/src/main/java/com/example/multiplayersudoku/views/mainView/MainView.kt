@@ -20,12 +20,14 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.components.GameSettingsBottomSheet
+import com.example.multiplayersudoku.components.SignInModal
 import com.example.multiplayersudoku.components.UserIcon
 import com.example.multiplayersudoku.ui.theme.FredokaFamily
 import kotlinx.coroutines.launch
@@ -57,9 +60,11 @@ fun MainView(
 ) {
     val viewModel: MainViewModel = hiltViewModel()
     val layoutDirection = LocalLayoutDirection.current
-
+    val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val loginSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     var showPlaySoloBottomSheet by remember { mutableStateOf(false) }
 
     var selectedDifficulty by remember { mutableStateOf(GameSettings.defaultDifficulty) }
@@ -84,6 +89,18 @@ fun MainView(
                 onNavigateToSudoku(gameSettings)
             }
         }
+    }
+
+    fun closeLoginBottomSheet() {
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+            if (!sheetState.isVisible) {
+                viewModel.closeLoginModal()
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.init(onNavigateToJoinRoom)
     }
 
     with(sharedTransitionScope) {
@@ -168,7 +185,7 @@ fun MainView(
                             )
                         }
                         Button(
-                            onClick = { onNavigateToJoinRoom() },
+                            onClick = viewModel::navigateToJoinRoom,
                             shapes = ButtonDefaults.shapes(),
                             modifier = Modifier
                                 .weight(1.5f)
@@ -197,6 +214,10 @@ fun MainView(
                         setSelectedHintsOption = { selectedHintsOption = it.toString() },
                         confirmButtonText = "Play solo",
                     )
+                }
+
+                if (viewModel.showLoginModal) {
+                    SignInModal(onDismissRequest = ::closeLoginBottomSheet, loginSheetState, snackbarHostState)
                 }
             }
         }
