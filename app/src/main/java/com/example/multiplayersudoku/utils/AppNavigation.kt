@@ -41,7 +41,7 @@ fun AppNavigation() {
     val DIFFICULTY_ARG = "difficulty"
     val MISTAKES_ARG = "mistakes"
     val HINTS_ARG = "hints"
-    val ROOM_CODE_ARG = "whoops"
+    val ROOM_CODE_ARG = "roomCode"
 
     // NavHost links the NavController to a navigation graph
     SharedTransitionLayout() {
@@ -94,11 +94,15 @@ fun AppNavigation() {
 
             // Screen 2: SudokuView
             composable(
-                route = "${AppView.SUDOKU_VIEW.name}/{$DIFFICULTY_ARG}/{$MISTAKES_ARG}/{$HINTS_ARG}",
+                route = "${AppView.SUDOKU_VIEW.name}/{$DIFFICULTY_ARG}/{$MISTAKES_ARG}/{$HINTS_ARG}?$ROOM_CODE_ARG={$ROOM_CODE_ARG}",
                 arguments = listOf(
                     navArgument(DIFFICULTY_ARG) { type = NavType.StringType },
                     navArgument(MISTAKES_ARG) { type = NavType.IntType },
-                    navArgument(HINTS_ARG) { type = NavType.IntType }
+                    navArgument(HINTS_ARG) { type = NavType.IntType },
+                    navArgument(ROOM_CODE_ARG) {
+                        type = NavType.StringType
+                        nullable = true
+                    }
                 ),
                 enterTransition = {
                     slideIntoContainer(
@@ -128,6 +132,7 @@ fun AppNavigation() {
                 val difficultyString = backStackEntry.arguments?.getString(DIFFICULTY_ARG)
                 val mistakes = backStackEntry.arguments?.getInt(MISTAKES_ARG) ?: 3
                 val hints = backStackEntry.arguments?.getInt(HINTS_ARG) ?: 5
+                val roomCode = backStackEntry.arguments?.getString(ROOM_CODE_ARG)
 
                 val difficultyObject = when {
                     difficultyString == "EASY" -> Difficulty.EASY
@@ -145,7 +150,8 @@ fun AppNavigation() {
                     onBack = {
                         navController.popBackStack()
                     },
-                    gameSettings = gameSettings
+                    gameSettings = gameSettings,
+                    roomCode = roomCode
                 )
             }
 
@@ -194,13 +200,17 @@ fun AppNavigation() {
                 val gameSettings = GameSettings()
                 gameSettings.difficulty = difficultyObject
 
-                val lobbyArgs = LobbyArgs(gameSettings = gameSettings, roomCode = roomCodeString.toString())
+                val lobbyArgs =
+                    LobbyArgs(gameSettings = gameSettings, roomCode = roomCodeString.toString())
 
                 LobbyView(
                     onBack = {
                         navController.popBackStack()
                     },
-                    lobbyArgs = lobbyArgs
+                    lobbyArgs = lobbyArgs,
+                    onNavigateToSudoku = { gameSettings, roomCode ->
+                        navController.navigate("${AppView.SUDOKU_VIEW.name}/${gameSettings.difficulty.name}/${gameSettings.mistakes}/${gameSettings.hints}?$ROOM_CODE_ARG=${roomCode}")
+                    }
                 )
             }
 

@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.multiplayersudoku.classes.Difficulty
+import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.classes.RoomData
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseUser
@@ -24,6 +25,7 @@ class LobbyViewModel @Inject constructor(
     private val repository: LobbyRepository
 ) : ViewModel() {
     private var onBack: (() -> Unit)? = null
+    private var onNavigateToSudoku: ((GameSettings, String) -> Unit)? = null
 
     var currentUser: FirebaseUser? by mutableStateOf(null)
         private set
@@ -74,7 +76,10 @@ class LobbyViewModel @Inject constructor(
     fun confirmGameSettings() {
         viewModelScope.launch {
             toggleGameSettingsBottomSheetVisibility()
-            repository.updateGameSettings(roomData?.roomCode ?: "", roomData?.gameSettings ?: return@launch)
+            repository.updateGameSettings(
+                roomData?.roomCode ?: "",
+                roomData?.gameSettings ?: return@launch
+            )
         }
     }
 
@@ -95,7 +100,11 @@ class LobbyViewModel @Inject constructor(
         }
     }
 
-    suspend fun init(lobbyArgs: LobbyArgs, onBack: () -> Unit) {
+    suspend fun init(
+        lobbyArgs: LobbyArgs,
+        onBack: () -> Unit,
+        onNavigateToSudoku: (GameSettings, String) -> Unit
+    ) {
         var code: String;
 
         if (lobbyArgs.roomCode.isEmpty()) {
@@ -108,12 +117,15 @@ class LobbyViewModel @Inject constructor(
         } else {
             // Queue the code to join the game
             code = lobbyArgs.roomCode
+            // Initialize temporarily first to not wait for async stuff
+            roomData = RoomData(lobbyArgs.gameSettings, code, Firebase.auth.currentUser?.uid ?: "")
             roomData = repository.joinRoom(code, Firebase.auth.currentUser?.uid ?: "")
         }
 
         currentUser = Firebase.auth.currentUser
         isOwner = currentUser?.uid == roomData?.ownerPath
         this.onBack = onBack
+        this.onNavigateToSudoku = onNavigateToSudoku
 
         if (isOwner) {
             exitMessage = " This will delete the room."
@@ -126,7 +138,8 @@ class LobbyViewModel @Inject constructor(
             repository.observeRoom(code).collect { updatedRoom ->
                 roomData = updatedRoom
                 if (owner == null) fetchOwner(updatedRoom.ownerPath)
-                if (opponent == null) opponent = repository.getPlayerData(updatedRoom.opponentPath ?: "")
+                if (opponent == null) opponent =
+                    repository.getPlayerData(updatedRoom.opponentPath ?: "")
                 if (roomData?.opponentPath != null) {
                     startButtonText = "Opponent not ready"
                 }
@@ -165,6 +178,10 @@ class LobbyViewModel @Inject constructor(
     }
 
     fun startGame() {
+        viewModelScope.launch {
+            repository.startGame(roomCode = roomData?.roomCode!!)
+        }
+        onNavigateToSudoku?.invoke(roomData?.gameSettings!!, roomData?.roomCode!!)
     }
 
     fun toggleReady() {

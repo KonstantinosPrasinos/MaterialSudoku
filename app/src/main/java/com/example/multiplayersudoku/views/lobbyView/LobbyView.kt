@@ -75,14 +75,19 @@ class LobbyArgs(gameSettings: GameSettings, roomCode: String) {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewModel = hiltViewModel()) {
+fun LobbyView(
+    lobbyArgs: LobbyArgs,
+    onBack: () -> Unit,
+    viewModel: LobbyViewModel = hiltViewModel(),
+    onNavigateToSudoku: (GameSettings, String) -> Unit
+) {
     val layoutDirection = LocalLayoutDirection.current
     val clipboardManager = LocalClipboard.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        viewModel.init(lobbyArgs, onBack)
+        viewModel.init(lobbyArgs, onBack, onNavigateToSudoku)
     }
 
     BackHandler(enabled = !viewModel.showExitConfirmDialog) {
@@ -91,7 +96,14 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
 
     fun copyCode() {
         scope.launch {
-            clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("Room code", viewModel.roomData?.roomCode)))
+            clipboardManager.setClipEntry(
+                ClipEntry(
+                    ClipData.newPlainText(
+                        "Room code",
+                        viewModel.roomData?.roomCode
+                    )
+                )
+            )
         }
     }
 
@@ -258,7 +270,7 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
                     ) {
                         if (viewModel.isOwner) {
                             Button(
-                                enabled = viewModel.roomData?.opponentReady == true,
+//                                enabled = viewModel.roomData?.opponentReady == true,
                                 onClick = viewModel::startGame,
                                 shapes = ButtonDefaults.shapes(),
                                 modifier = Modifier
@@ -301,7 +313,8 @@ fun LobbyView(lobbyArgs: LobbyArgs, onBack: () -> Unit, viewModel: LobbyViewMode
                 sheetState = sheetState,
                 toggleVisibility = viewModel::toggleGameSettingsBottomSheetVisibility,
                 setDifficulty = viewModel::setGameDifficulty,
-                selectedDifficulty = viewModel.roomData?.gameSettings?.difficulty ?: GameSettings.defaultDifficulty,
+                selectedDifficulty = viewModel.roomData?.gameSettings?.difficulty
+                    ?: GameSettings.defaultDifficulty,
                 selectedMistakesOption = viewModel.roomData?.gameSettings?.mistakes.toString(),
                 setSelectedMistakesOption = { viewModel.setMistakes(it.toInt()) },
                 selectedHintsOption = viewModel.roomData?.gameSettings?.hints.toString(),

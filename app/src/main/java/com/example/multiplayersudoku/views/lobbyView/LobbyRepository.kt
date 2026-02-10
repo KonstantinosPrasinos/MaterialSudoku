@@ -3,6 +3,7 @@ package com.example.multiplayersudoku.views.lobbyView
 import Player
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.classes.RoomData
+import com.example.multiplayersudoku.classes.RoomState
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -60,12 +61,13 @@ class LobbyRepository @Inject constructor(
     }
 
     suspend fun joinRoom(roomCode: String, userId: String): RoomData {
-        val room = rtdb.child("rooms").child(roomCode);
-        room.child("opponentPath").setValue(userId).await();
+        val room = rtdb.child("rooms").child(roomCode)
+        room.child("opponentPath").setValue(userId).await()
 
         val roomSnapshot = room.get().await();
 
-        val roomData: RoomData = roomSnapshot.getValue(RoomData::class.java) ?: throw Exception("Room data is null")
+        val roomData: RoomData =
+            roomSnapshot.getValue(RoomData::class.java) ?: throw Exception("Room data is null")
 
         return roomData
     }
@@ -94,5 +96,13 @@ class LobbyRepository @Inject constructor(
 
     suspend fun setOpponentReady(roomCode: String, userId: String) {
         rtdb.child("rooms").child(roomCode).child("opponentPath").setValue(userId).await()
+    }
+
+    suspend fun startGame(roomCode: String) {
+        rtdb
+            .child("rooms")
+            .child(roomCode).child("roomStateName")
+            .setValue(RoomState.PLAYING.name)
+            .await()
     }
 }

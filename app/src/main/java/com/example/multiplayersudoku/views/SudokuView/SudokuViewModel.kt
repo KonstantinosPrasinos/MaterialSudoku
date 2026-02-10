@@ -6,21 +6,27 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.multiplayersudoku.classes.GameSettings
+import com.example.multiplayersudoku.classes.RoomData
 import com.example.multiplayersudoku.classes.SudokuBoardData
 import com.example.multiplayersudoku.classes.SudokuTileData
 import com.example.multiplayersudoku.datastore.gameResult.GameResult
 import com.example.multiplayersudoku.datastore.gameResult.StatisticsRepository
 import com.example.multiplayersudoku.utils.attemptSolve
 import com.example.multiplayersudoku.utils.updateNotes
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class SudokuViewModel @Inject constructor(
-    private val repository: StatisticsRepository
+    private val statisticsRepository: StatisticsRepository,
+    private val repository: SudokuViewRepository
 ) : ViewModel() {
     private lateinit var gameSettings: GameSettings
 
@@ -64,21 +70,97 @@ class SudokuViewModel @Inject constructor(
     var isFirstRun by mutableStateOf(true)
         private set
 
+    var roomData: RoomData? by mutableStateOf(null)
+        private set
+
+    var userId: String? by mutableStateOf(null)
+        private set
+
+    var isLoading: Boolean by mutableStateOf(true)
+        private set
+
     private var timerJob: Job? = null
 
-    fun init(settings: GameSettings) {
+    private fun initializeMultiplayerAsOwner() {
+        val newSudokuBoard = SudokuBoardData.generateRandom(gameSettings.difficulty)
+        val canonBoard =
+            newSudokuBoard.board.map { it.map { tile -> if (tile.value != null) tile.value else -1 } as List<Int> }
+        val updatedRoomData = roomData?.copy(
+            ownerBoard = newSudokuBoard.board,
+            opponentBoard = newSudokuBoard.board,
+            canonBoard = canonBoard
+        )
+
+        // Update the local state on the Main thread
+        viewModelScope.launch(Dispatchers.Main) {
+            sudokuBoard = newSudokuBoard
+            roomData = updatedRoomData
+        }
+
+
+        if (updatedRoomData != null) {
+            repository.setAllBoards(updatedRoomData) // This should be a suspend fun
+        }
+    }
+
+    private fun initializeMultiplayerAsOpponent() {
+
+    }
+
+    fun init(settings: GameSettings, roomCode: String?) {
         gameSettings = settings
-        sudokuBoard = SudokuBoardData.generateRandom(gameSettings.difficulty)
-        startTimer()
+        // Don't set isLoading here, it's true by default
+
+        viewModelScope.launch { // The parent coroutine
+            try {
+                if (!roomCode.isNullOrEmpty()) {
+                    // --- Multiplayer Logic ---
+                    userId = Firebase.auth.currentUser?.uid
+                    if (userId == null) return@launch // Early exit
+
+                    // Perform network and CPU work in the background
+                    withContext(Dispatchers.IO) { // Use IO for network, Default for CPU
+                        val fetchedRoomData = repository.getRoomData(roomCode, userId!!)
+                        withContext(Dispatchers.Main) {
+                            roomData = fetchedRoomData
+                        }
+
+                        if (fetchedRoomData.ownerPath == userId) {
+                            // This contains the CPU-heavy board generation
+                            initializeMultiplayerAsOwner()
+                        } else {
+                            initializeMultiplayerAsOpponent()
+                        }
+                    }
+                } else {
+                    // --- Solo Player Logic ---
+                    // Generate the board on the Default dispatcher (for CPU-bound work)
+                    val newBoard = withContext(Dispatchers.Default) {
+                        SudokuBoardData.generateRandom(gameSettings.difficulty)
+                    }
+                    // Update the UI state on the Main thread
+                    withContext(Dispatchers.Main) {
+                        sudokuBoard = newBoard
+                    }
+                }
+            } finally {
+                // This block runs whether the try block succeeds or fails
+                withContext(Dispatchers.Main) {
+                    isLoading = false
+                    startTimer()
+                }
+            }
+        }
     }
 
     private fun checkForMistakes(number: Int, row: Int, col: Int): Boolean {
         val newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
         val tileToUpdate = newBoard[row][col]
 
-        val isDuplicate = com.example.multiplayersudoku.utils.checkRow(newBoard, tileToUpdate, number) ||
-                com.example.multiplayersudoku.utils.checkCol(newBoard, tileToUpdate, number) ||
-                com.example.multiplayersudoku.utils.checkGrid(newBoard, tileToUpdate, number)
+        val isDuplicate =
+            com.example.multiplayersudoku.utils.checkRow(newBoard, tileToUpdate, number) ||
+                    com.example.multiplayersudoku.utils.checkCol(newBoard, tileToUpdate, number) ||
+                    com.example.multiplayersudoku.utils.checkGrid(newBoard, tileToUpdate, number)
 
         if (isDuplicate) return true
 
@@ -106,7 +188,7 @@ class SudokuViewModel @Inject constructor(
     }
 
     private fun checkGrid(board: List<List<SudokuTileData>>, tile: SudokuTileData): Boolean {
-        val startRow = tile.rowIndex!! - (tile.rowIndex % 3)
+        val startRow = tile.rowIndex!! - (tile.rowIndex!! % 3)
         val startCol = tile.colIndex!! - (tile.colIndex!! % 3)
         var emptyTileFound = false
 
@@ -200,7 +282,8 @@ class SudokuViewModel @Inject constructor(
                 }
                 if (gridCompleted) {
                     val tileToAnimate = newBoard[tilesToAnimate[i].first][tilesToAnimate[i].second]
-                    newBoard[tilesToAnimate[i].first][tilesToAnimate[i].second] = tileToAnimate.copy(isCompleted = true)
+                    newBoard[tilesToAnimate[i].first][tilesToAnimate[i].second] =
+                        tileToAnimate.copy(isCompleted = true)
                     animatedTiles.add(tilesToAnimate[i])
                 }
 
@@ -260,8 +343,8 @@ class SudokuViewModel @Inject constructor(
     private fun onGameFinished(result: GameResult) {
         // Add the result to local state and firebase
         viewModelScope.launch {
-            repository.saveResult(result)
-            repository.saveResultToFirestore(result)
+            statisticsRepository.saveResult(result)
+            statisticsRepository.saveResultToFirestore(result)
         }
     }
 

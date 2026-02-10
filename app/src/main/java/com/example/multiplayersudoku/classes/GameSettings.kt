@@ -31,5 +31,4 @@ class GameSettings(
         return GameSettings(hints, mistakes, difficulty.name)
     }
 
-    constructor() : this(1, 1, Difficulty.EASY.name)
 }

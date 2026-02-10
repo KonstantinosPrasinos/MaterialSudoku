@@ -92,7 +92,7 @@ fun updateNotes(
     }
 
     // Remove the note from the 3x3 grid
-    val startRow = tile.rowIndex / 3 * 3
+    val startRow = tile.rowIndex!! / 3 * 3
     val startCol = tile.colIndex!! / 3 * 3
 
     for (r in startRow until startRow + 3) {

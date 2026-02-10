@@ -2,12 +2,15 @@ package com.example.multiplayersudoku.views.SudokuView
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -18,7 +21,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
@@ -31,6 +36,7 @@ import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.ui.theme.extendedColors
 import com.example.multiplayersudoku.utils.formatDifficulty
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -67,9 +73,11 @@ fun EndDialogText(difficulty: Difficulty, seconds: Int, userHasWon: Boolean) {
     }
 
     val emphasizedStyle =
-        MaterialTheme.typography.titleMediumEmphasized.copy(color = MaterialTheme.colorScheme.primary).toSpanStyle()
-    val normalStyle = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onSurface)
-        .toSpanStyle()
+        MaterialTheme.typography.titleMediumEmphasized.copy(color = MaterialTheme.colorScheme.primary)
+            .toSpanStyle()
+    val normalStyle =
+        MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onSurface)
+            .toSpanStyle()
 
     Text(text = buildAnnotatedString {
         withStyle(
@@ -108,12 +116,15 @@ fun EndDialogText(difficulty: Difficulty, seconds: Int, userHasWon: Boolean) {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
+fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val viewModel: SudokuViewModel = hiltViewModel()
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        viewModel.init(gameSettings)
+        scope.launch {
+            viewModel.init(gameSettings, roomCode)
+        }
     }
 
     BackHandler(enabled = !viewModel.showExitDialog) {
@@ -134,101 +145,118 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings) {
         }
     }
 
-    if (viewModel.showExitDialog) {
-        AlertDialog(
-            onDismissRequest = { viewModel.setExitDialogVisibility(false) },
-            title = { Text("Quit Game?") },
-            text = { Text("Are you sure you want to leave? Your progress will be lost.") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.updateShowExitDialogState(false)
-                        onBack()
+    if (viewModel.isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularWavyProgressIndicator()
+        }
+    } else {
+        if (viewModel.showExitDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.setExitDialogVisibility(false) },
+                title = { Text("Quit Game?") },
+                text = { Text("Are you sure you want to leave? Your progress will be lost.") },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.updateShowExitDialogState(false)
+                            onBack()
+                        }
+                    ) {
+                        Text("Quit")
                     }
-                ) {
-                    Text("Quit")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.setExitDialogVisibility(false) }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
-    if (viewModel.showGameEndDialog) {
-        AlertDialog(
-            onDismissRequest = { },
-            title = { Text(if (viewModel.userHasWon) "You won 🎉" else "You lost 😅") },
-            icon = {
-                if (viewModel.userHasWon) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_chess_queen),
-                        contentDescription = "Crown",
-                        tint = MaterialTheme.extendedColors.win,
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
-            },
-            text = { EndDialogText(gameSettings.difficulty, viewModel.seconds, viewModel.userHasWon) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.updateShowGameEndDialogState(false)
-                        onBack()
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.setExitDialogVisibility(false) }) {
+                        Text("Cancel")
                     }
-                ) {
-                    Text("Continue")
                 }
-            }
-        )
-    }
-
-    EndDialogText(gameSettings.difficulty, viewModel.seconds, viewModel.userHasWon)
-
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            SudokuTopAppBar(
-                scrollBehavior = scrollBehavior,
-                isPaused = viewModel.isPaused,
-                togglePaused = viewModel::togglePaused,
-                onBack = { viewModel.setExitDialogVisibility(true) },
-                difficulty = gameSettings.difficulty,
-                seconds = viewModel.seconds
             )
         }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(horizontal = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            InfoBar(
-                hints = viewModel.hints,
-                mistakes = viewModel.mistakes,
-                maxHints = gameSettings.hints,
-                maxMistakes = gameSettings.mistakes,
+
+        if (viewModel.showGameEndDialog) {
+            AlertDialog(
+                onDismissRequest = { },
+                title = { Text(if (viewModel.userHasWon) "You won 🎉" else "You lost 😅") },
+                icon = {
+                    if (viewModel.userHasWon) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_chess_queen),
+                            contentDescription = "Crown",
+                            tint = MaterialTheme.extendedColors.win,
+                            modifier = Modifier.size(60.dp)
+                        )
+                    }
+                },
+                text = {
+                    EndDialogText(
+                        gameSettings.difficulty,
+                        viewModel.seconds,
+                        viewModel.userHasWon
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.updateShowGameEndDialogState(false)
+                            onBack()
+                        }
+                    ) {
+                        Text("Continue")
+                    }
+                }
             )
-            SudokuBoard(
-                boardData = viewModel.sudokuBoard,
-                selectedTileIndices = viewModel.selectedTileIndices,
-                selectTile = viewModel::selectTile,
-                isPaused = viewModel.isPaused,
-                togglePaused = viewModel::togglePaused
-            )
-            NumberButtons(onNumberClick = viewModel::setTileValue, isPaused = viewModel.isPaused)
-            ActionButtons(
-                isWritingNotes = viewModel.isWritingNotes,
-                toggleEditing = viewModel::toggleWritingNotes,
-                eraseTile = viewModel::eraseSelectedTile,
-                undoLastAction = viewModel::undoLastAction,
-                canUndo = viewModel.undoableActions.isNotEmpty(),
-                generateHint = viewModel::generateHint,
-                canGenerateHint = viewModel.hints < gameSettings.hints
-            )
+        }
+
+        if (viewModel.showGameEndDialog) {
+            EndDialogText(gameSettings.difficulty, viewModel.seconds, viewModel.userHasWon)
+        }
+
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                SudokuTopAppBar(
+                    scrollBehavior = scrollBehavior,
+                    isPaused = viewModel.isPaused,
+                    togglePaused = viewModel::togglePaused,
+                    onBack = { viewModel.setExitDialogVisibility(true) },
+                    difficulty = gameSettings.difficulty,
+                    seconds = viewModel.seconds
+                )
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(horizontal = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                InfoBar(
+                    hints = viewModel.hints,
+                    mistakes = viewModel.mistakes,
+                    maxHints = gameSettings.hints,
+                    maxMistakes = gameSettings.mistakes,
+                )
+                SudokuBoard(
+                    boardData = viewModel.sudokuBoard,
+                    selectedTileIndices = viewModel.selectedTileIndices,
+                    selectTile = viewModel::selectTile,
+                    isPaused = viewModel.isPaused,
+                    togglePaused = viewModel::togglePaused
+                )
+                NumberButtons(
+                    onNumberClick = viewModel::setTileValue,
+                    isPaused = viewModel.isPaused
+                )
+                ActionButtons(
+                    isWritingNotes = viewModel.isWritingNotes,
+                    toggleEditing = viewModel::toggleWritingNotes,
+                    eraseTile = viewModel::eraseSelectedTile,
+                    undoLastAction = viewModel::undoLastAction,
+                    canUndo = viewModel.undoableActions.isNotEmpty(),
+                    generateHint = viewModel::generateHint,
+                    canGenerateHint = viewModel.hints < gameSettings.hints
+                )
+            }
         }
     }
 }
