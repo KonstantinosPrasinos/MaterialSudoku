@@ -14,6 +14,7 @@ import com.example.multiplayersudoku.datastore.gameResult.StatisticsRepository
 import com.example.multiplayersudoku.utils.attemptSolve
 import com.example.multiplayersudoku.utils.updateNotes
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -76,6 +77,9 @@ class SudokuViewModel @Inject constructor(
     var userId: String? by mutableStateOf(null)
         private set
 
+    var user: FirebaseUser? by mutableStateOf(null)
+        private set
+
     var isLoading: Boolean by mutableStateOf(true)
         private set
 
@@ -109,13 +113,14 @@ class SudokuViewModel @Inject constructor(
 
     fun init(settings: GameSettings, roomCode: String?) {
         gameSettings = settings
+        user = Firebase.auth.currentUser
         // Don't set isLoading here, it's true by default
 
         viewModelScope.launch { // The parent coroutine
             try {
                 if (!roomCode.isNullOrEmpty()) {
                     // --- Multiplayer Logic ---
-                    userId = Firebase.auth.currentUser?.uid
+                    userId = user?.uid
                     if (userId == null) return@launch // Early exit
 
                     // Perform network and CPU work in the background
@@ -369,6 +374,24 @@ class SudokuViewModel @Inject constructor(
         updatePauseState(value)
     }
 
+    private fun calculateBoardFillPercentage(boardData: List<List<SudokuTileData>>): Float {
+        var filledCells = 0
+        var totalCells = 0f
+
+        for (row in boardData) {
+            for (tile in row) {
+                if (tile.value != null && !tile.isMistake && tile.isEditable) {
+                    filledCells++;
+                }
+                if (tile.isEditable) {
+                    totalCells++
+                }
+            }
+        }
+
+        return filledCells / totalCells
+    }
+
     fun setTileValue(
         number: Int
     ) {
@@ -427,6 +450,25 @@ class SudokuViewModel @Inject constructor(
                     tileToUpdate,
                     number
                 ) as MutableList<MutableList<SudokuTileData>>
+
+            if (roomData != null) {
+                if (roomData?.ownerPath == userId) {
+                    roomData = roomData?.copy(
+                        ownerBoardPercentage = calculateBoardFillPercentage(newBoard)
+                    )
+                } else {
+                    roomData = roomData?.copy(
+                        opponentBoardPercentage = calculateBoardFillPercentage(newBoard)
+                    )
+                }
+//                viewModelScope.launch {
+//                    repository.setBoardPercentages(
+//                        roomData!!.roomCode,
+//                        roomData!!.ownerBoardPercentage,
+//                        roomData!!.opponentBoardPercentage
+//                    )
+//                }
+            }
 
             if (checkForWin(newBoard)) {
                 userHasWon = true

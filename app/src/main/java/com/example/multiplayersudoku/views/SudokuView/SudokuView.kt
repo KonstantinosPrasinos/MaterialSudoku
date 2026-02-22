@@ -236,6 +236,11 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?
                     maxHints = gameSettings.hints,
                     maxMistakes = gameSettings.mistakes,
                 )
+                MultiplayerProgressBar(
+                    player1Percentage = viewModel.roomData?.ownerBoardPercentage ?: 0f,
+                    player1PhotoUrl = viewModel.user?.photoUrl.toString(),
+                    player2Percentage = viewModel.roomData?.opponentBoardPercentage ?: 0f
+                )
                 SudokuBoard(
                     boardData = viewModel.sudokuBoard,
                     selectedTileIndices = viewModel.selectedTileIndices,

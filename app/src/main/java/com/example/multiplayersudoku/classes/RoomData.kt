@@ -14,7 +14,9 @@ class RoomData(
     var canonBoard: List<List<Int>>? = null,
     var flatOwnerBoard: List<SudokuTileData>? = null,
     var flatOpponentBoard: List<SudokuTileData>? = null,
-    var opponentReadyToPlay: Boolean = false // This is true when the opponent has initialized sudoku view to start the timer
+    var opponentReadyToPlay: Boolean = false, // This is true when the opponent has initialized sudoku view to start the timer
+    var ownerBoardPercentage: Float = 0.0f,
+    var opponentBoardPercentage: Float = 0.0f
 ) {
     @get:Exclude
     @set:Exclude
@@ -51,12 +53,14 @@ class RoomData(
         canonBoard: List<List<Int>>? = this.canonBoard,
         ownerBoard: List<List<SudokuTileData>>? = this.ownerBoard,
         opponentBoard: List<List<SudokuTileData>>? = this.opponentBoard,
-        opponentReadyToPlay: Boolean = this.opponentReadyToPlay
+        opponentReadyToPlay: Boolean = this.opponentReadyToPlay,
+        ownerBoardPercentage: Float = this.ownerBoardPercentage,
+        opponentBoardPercentage: Float = this.opponentBoardPercentage
     ): RoomData {
         val newRoom = RoomData(
             gameSettings, roomCode, ownerPath, opponentPath,
             opponentReady, roomState.name, canonBoard,
-            null, null, opponentReadyToPlay
+            null, null, opponentReadyToPlay, ownerBoardPercentage, opponentBoardPercentage
         )
         newRoom.ownerBoard = ownerBoard
         newRoom.opponentBoard = opponentBoard
