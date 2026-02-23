@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -53,22 +54,26 @@ fun MultiplayerProgressBar(
     val density = LocalDensity.current
 
     val p1Offset = remember { Animatable(0f) }
+    val p2Offset = remember { Animatable(0f) }
     val shapeScale = remember { Animatable(1f) }
     val crownOffset = remember { Animatable(0f) }
 
     val defaultSpatial = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
-    val fastSpatial = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
 
     LaunchedEffect(player1Percentage, player2Percentage) {
-        if (player1Percentage < 1.0f) return@LaunchedEffect
+        if (player1Percentage < 1.0f && player2Percentage < 1.0f) return@LaunchedEffect
         val targetCrownOffset = with(density) { (-24).dp.toPx() }
         val targetP1Offset = with(density) { (38).dp.toPx() }
+        val targetP2Offset = with(density) { (-38).dp.toPx() }
 
         launch {
-            p1Offset.animateTo(targetP1Offset, animationSpec = defaultSpatial)
+            if (player1Percentage == 1.0f) {
+                p1Offset.animateTo(targetP1Offset, animationSpec = defaultSpatial)
+            } else {
+                p2Offset.animateTo(targetP2Offset, animationSpec = defaultSpatial)
+            }
         }
         launch {
-            Log.d("MultiplayerProgressBar", "Scaling up")
             shapeScale.animateTo(0f, animationSpec = defaultSpatial)
         }
 
@@ -90,23 +95,27 @@ fun MultiplayerProgressBar(
             Modifier
                 .weight(1f)
         ) {
-            Surface(
-                color = MaterialTheme.colorScheme.secondary,
+            Box(
                 modifier = Modifier
                     .widthIn(min = 40.dp)
                     .fillMaxWidth(player1Percentage)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(100))
-            ) {}
-            UserIcon(
-                photoUrl = player1PhotoUrl,
-                modifier = Modifier
-                    .size(40.dp)
-                    .align(Alignment.CenterEnd)
-                    .offset {
-                        IntOffset(x = p1Offset.value.roundToInt(), y = 0)
-                    }
-            )
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(100))
+                ) {}
+                UserIcon(
+                    photoUrl = player1PhotoUrl,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .align(Alignment.CenterEnd)
+                        .offset {
+                            IntOffset(x = p1Offset.value.roundToInt(), y = 0)
+                        }
+                )
+            }
         }
         Box(
             modifier = Modifier
@@ -135,24 +144,27 @@ fun MultiplayerProgressBar(
         Box(
             Modifier
                 .weight(1f)
-                .clip(RoundedCornerShape(100))
         ) {
-            Surface(
-                color = MaterialTheme.colorScheme.secondary,
+            Box(
                 modifier = Modifier
+                    .widthIn(min = 40.dp)
                     .fillMaxWidth(player2Percentage)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(100))
-                    .align(Alignment.CenterEnd)
             ) {
-                Box() {
-                    UserIcon(
-                        photoUrl = player2PhotoUrl,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .align(Alignment.CenterStart)
-                    )
-                }
+                Surface(
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(100))
+                ) {}
+                UserIcon(
+                    photoUrl = player2PhotoUrl,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .align(Alignment.CenterStart)
+                        .offset {
+                            IntOffset(x = p2Offset.value.roundToInt(), y = 0)
+                        }
+                )
             }
         }
     }
