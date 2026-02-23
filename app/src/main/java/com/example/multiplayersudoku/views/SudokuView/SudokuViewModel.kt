@@ -1,5 +1,8 @@
 package com.example.multiplayersudoku.views.SudokuView
 
+import Player
+import android.content.ContentValues.TAG
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -80,6 +83,12 @@ class SudokuViewModel @Inject constructor(
     var user: FirebaseUser? by mutableStateOf(null)
         private set
 
+    var owner: Player? by mutableStateOf(null)
+        private set
+
+    var opponent: Player? by mutableStateOf(null)
+        private set
+
     var isLoading: Boolean by mutableStateOf(true)
         private set
 
@@ -110,8 +119,38 @@ class SudokuViewModel @Inject constructor(
         }
     }
 
+    fun listenToRoomChanges() {
+        if (roomData == null) return
+
+        viewModelScope.launch {
+            repository.observeRoom(roomData!!.roomCode).collect { updatedRoom ->
+                roomData = updatedRoom
+                if (owner == null || opponent == null) {
+                    initializePlayers()
+                }
+            }
+        }
+    }
+
     private fun initializeMultiplayerAsOpponent() {
 
+    }
+
+    suspend fun initializePlayers() {
+        if (roomData == null) {
+            Log.e(TAG, "Room data is null ${roomData?.ownerPath}")
+            return
+        }
+
+        if (roomData?.ownerPath == null) {
+            Log.e(TAG, "Owner path is null")
+            return
+        }
+
+        owner = repository.getPlayerData(roomData?.ownerPath ?: "")
+        if (roomData?.opponentPath != null) {
+            opponent = repository.getPlayerData(roomData?.opponentPath ?: "")
+        }
     }
 
     fun init(settings: GameSettings, roomCode: String?) {
@@ -124,7 +163,7 @@ class SudokuViewModel @Inject constructor(
                 if (!roomCode.isNullOrEmpty()) {
                     // --- Multiplayer Logic ---
                     isMultiplayer = true
-                    
+
                     userId = user?.uid
                     if (userId == null) return@launch // Early exit
 
@@ -135,12 +174,15 @@ class SudokuViewModel @Inject constructor(
                             roomData = fetchedRoomData
                         }
 
+                        initializePlayers()
+
                         if (fetchedRoomData.ownerPath == userId) {
                             // This contains the CPU-heavy board generation
                             initializeMultiplayerAsOwner()
                         } else {
                             initializeMultiplayerAsOpponent()
                         }
+                        listenToRoomChanges()
                     }
                 } else {
                     // --- Solo Player Logic ---
@@ -459,20 +501,23 @@ class SudokuViewModel @Inject constructor(
             if (roomData != null) {
                 if (roomData?.ownerPath == userId) {
                     roomData = roomData?.copy(
+                        ownerBoard = newBoard,
                         ownerBoardPercentage = calculateBoardFillPercentage(newBoard)
                     )
+
+                    viewModelScope.launch {
+                        repository.setOwnerBoard(roomData!!)
+                    }
                 } else {
                     roomData = roomData?.copy(
+                        opponentBoard = newBoard,
                         opponentBoardPercentage = calculateBoardFillPercentage(newBoard)
                     )
+
+                    viewModelScope.launch {
+                        repository.setOpponentBoard(roomData!!)
+                    }
                 }
-//                viewModelScope.launch {
-//                    repository.setBoardPercentages(
-//                        roomData!!.roomCode,
-//                        roomData!!.ownerBoardPercentage,
-//                        roomData!!.opponentBoardPercentage
-//                    )
-//                }
             }
 
             if (checkForWin(newBoard)) {
@@ -594,6 +639,7 @@ class SudokuViewModel @Inject constructor(
     }
 
     fun togglePaused() {
+        if (isMultiplayer) return
         isPaused = !isPaused
         if (isPaused) {
             stopTimer()

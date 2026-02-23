@@ -240,7 +240,8 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?
                 if (viewModel.isMultiplayer) {
                     MultiplayerProgressBar(
                         player1Percentage = viewModel.roomData?.ownerBoardPercentage ?: 0f,
-                        player1PhotoUrl = viewModel.user?.photoUrl.toString(),
+                        player1PhotoUrl = viewModel.owner?.profilePictureURL,
+                        player2PhotoUrl = viewModel.opponent?.profilePictureURL,
                         player2Percentage = viewModel.roomData?.opponentBoardPercentage ?: 0f
                     )
                 }

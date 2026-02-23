@@ -95,7 +95,7 @@ class LobbyViewModel @Inject constructor(
         }
 
         owner = repository.getPlayerData(roomData?.ownerPath ?: "")
-        if (roomData?.ownerPath != null) {
+        if (roomData?.opponentPath != null) {
             opponent = repository.getPlayerData(roomData?.opponentPath ?: "")
         }
     }

@@ -143,6 +143,7 @@ fun MultiplayerProgressBar(
                 modifier = Modifier
                     .widthIn(min = 40.dp)
                     .fillMaxWidth(player2Percentage)
+                    .align(Alignment.CenterEnd)
             ) {
                 Surface(
                     color = MaterialTheme.colorScheme.secondary,
