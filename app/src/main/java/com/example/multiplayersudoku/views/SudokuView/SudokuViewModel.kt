@@ -117,6 +117,17 @@ class SudokuViewModel @Inject constructor(
         if (updatedRoomData != null) {
             repository.setAllBoards(updatedRoomData) // This should be a suspend fun
         }
+
+        listenToRoomChanges()
+    }
+
+    private fun initializeMultiplayerAsOpponent() {
+        if (roomData?.opponentBoard == null) return
+        viewModelScope.launch(Dispatchers.Main) {
+            sudokuBoard = SudokuBoardData(roomData?.opponentBoard!!)
+        }
+
+        listenToRoomChanges()
     }
 
     fun listenToRoomChanges() {
@@ -128,12 +139,11 @@ class SudokuViewModel @Inject constructor(
                 if (owner == null || opponent == null) {
                     initializePlayers()
                 }
+                if (opponent?.id == userId && sudokuBoard.isEmpty()) {
+                    sudokuBoard = SudokuBoardData(roomData?.opponentBoard!!)
+                }
             }
         }
-    }
-
-    private fun initializeMultiplayerAsOpponent() {
-
     }
 
     suspend fun initializePlayers() {
@@ -182,7 +192,6 @@ class SudokuViewModel @Inject constructor(
                         } else {
                             initializeMultiplayerAsOpponent()
                         }
-                        listenToRoomChanges()
                     }
                 } else {
                     // --- Solo Player Logic ---

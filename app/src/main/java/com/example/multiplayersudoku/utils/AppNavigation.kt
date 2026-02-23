@@ -209,7 +209,9 @@ fun AppNavigation() {
                     },
                     lobbyArgs = lobbyArgs,
                     onNavigateToSudoku = { gameSettings, roomCode ->
-                        navController.navigate("${AppView.SUDOKU_VIEW.name}/${gameSettings.difficulty.name}/${gameSettings.mistakes}/${gameSettings.hints}?$ROOM_CODE_ARG=${roomCode}")
+                        navController.navigate("${AppView.SUDOKU_VIEW.name}/${gameSettings.difficulty.name}/${gameSettings.mistakes}/${gameSettings.hints}?$ROOM_CODE_ARG=${roomCode}") {
+                            popUpTo(navController.graph.startDestinationId)
+                        }
                     }
                 )
             }

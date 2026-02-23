@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.classes.RoomData
+import com.example.multiplayersudoku.classes.RoomState
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
@@ -137,11 +138,16 @@ class LobbyViewModel @Inject constructor(
         viewModelScope.launch {
             repository.observeRoom(code).collect { updatedRoom ->
                 roomData = updatedRoom
-                if (owner == null) fetchOwner(updatedRoom.ownerPath)
-                if (opponent == null) opponent =
-                    repository.getPlayerData(updatedRoom.opponentPath ?: "")
+                if (owner == null || opponent == null) initializePlayers()
                 if (roomData?.opponentPath != null) {
-                    startButtonText = "Opponent not ready"
+                    if (roomData?.opponentReady == true) {
+                        startButtonText = "Start game"
+                    } else {
+                        startButtonText = "Opponent not ready"
+                    }
+                }
+                if (roomData?.roomState == RoomState.PLAYING) {
+                    onNavigateToSudoku.invoke(roomData?.gameSettings!!, roomData?.roomCode!!)
                 }
             }
         }
@@ -185,11 +191,12 @@ class LobbyViewModel @Inject constructor(
     }
 
     fun toggleReady() {
-        if (isOwner) return;
-        roomData?.opponentReady = !roomData?.opponentReady!!
+        if (isOwner) return
+        val readyState = !roomData?.opponentReady!!
+        roomData?.opponentReady = readyState
         viewModelScope.launch {
             if (roomData?.opponentPath != null) {
-                repository.setOpponentReady(roomData?.roomCode ?: "", roomData?.opponentPath ?: "")
+                repository.setOpponentReady(roomData?.roomCode ?: "", readyState)
             }
         }
     }

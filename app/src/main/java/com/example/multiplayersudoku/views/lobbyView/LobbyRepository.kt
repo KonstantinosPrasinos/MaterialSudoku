@@ -94,8 +94,8 @@ class LobbyRepository @Inject constructor(
         rtdb.child("rooms").child(roomData.roomCode).removeValue().await()
     }
 
-    suspend fun setOpponentReady(roomCode: String, userId: String) {
-        rtdb.child("rooms").child(roomCode).child("opponentPath").setValue(userId).await()
+    suspend fun setOpponentReady(roomCode: String, opponentReady: Boolean) {
+        rtdb.child("rooms").child(roomCode).child("opponentReady").setValue(opponentReady).await()
     }
 
     suspend fun startGame(roomCode: String) {

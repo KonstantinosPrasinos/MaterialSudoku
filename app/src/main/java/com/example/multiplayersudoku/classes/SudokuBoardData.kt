@@ -41,6 +41,17 @@ data class SudokuBoardData(
         }
     }
 
+    fun isEmpty(): Boolean {
+        for (row in board) {
+            for (tile in row) {
+                if (tile.value != null) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
     fun getAsNumberList(): List<List<Int>> {
         return board.map { row -> row.map({ it.value ?: 0 }) }
     }

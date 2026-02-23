@@ -270,7 +270,7 @@ fun LobbyView(
                     ) {
                         if (viewModel.isOwner) {
                             Button(
-//                                enabled = viewModel.roomData?.opponentReady == true,
+                                enabled = viewModel.roomData?.opponentReady == true,
                                 onClick = viewModel::startGame,
                                 shapes = ButtonDefaults.shapes(),
                                 modifier = Modifier
