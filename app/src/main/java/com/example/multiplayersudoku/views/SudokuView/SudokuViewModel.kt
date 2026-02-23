@@ -83,6 +83,9 @@ class SudokuViewModel @Inject constructor(
     var isLoading: Boolean by mutableStateOf(true)
         private set
 
+    var isMultiplayer: Boolean by mutableStateOf(false)
+        private set
+
     private var timerJob: Job? = null
 
     private fun initializeMultiplayerAsOwner() {
@@ -120,6 +123,8 @@ class SudokuViewModel @Inject constructor(
             try {
                 if (!roomCode.isNullOrEmpty()) {
                     // --- Multiplayer Logic ---
+                    isMultiplayer = true
+                    
                     userId = user?.uid
                     if (userId == null) return@launch // Early exit
 

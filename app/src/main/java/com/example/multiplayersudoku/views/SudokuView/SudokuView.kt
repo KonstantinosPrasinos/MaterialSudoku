@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -134,6 +133,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?
     val windowInfo = LocalWindowInfo.current
     LaunchedEffect(windowInfo) {
         snapshotFlow { windowInfo.isWindowFocused }.collect { isFocused ->
+            if (viewModel.isMultiplayer) return@collect
             if (viewModel.isFirstRun) {
                 viewModel.updateFirstRunState(false)
                 return@collect
@@ -220,7 +220,8 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?
                     togglePaused = viewModel::togglePaused,
                     onBack = { viewModel.setExitDialogVisibility(true) },
                     difficulty = gameSettings.difficulty,
-                    seconds = viewModel.seconds
+                    seconds = viewModel.seconds,
+                    showPauseButton = !viewModel.isMultiplayer
                 )
             }
         ) { innerPadding ->
@@ -236,11 +237,13 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?
                     maxHints = gameSettings.hints,
                     maxMistakes = gameSettings.mistakes,
                 )
-                MultiplayerProgressBar(
-                    player1Percentage = viewModel.roomData?.ownerBoardPercentage ?: 0f,
-                    player1PhotoUrl = viewModel.user?.photoUrl.toString(),
-                    player2Percentage = viewModel.roomData?.opponentBoardPercentage ?: 0f
-                )
+                if (viewModel.isMultiplayer) {
+                    MultiplayerProgressBar(
+                        player1Percentage = viewModel.roomData?.ownerBoardPercentage ?: 0f,
+                        player1PhotoUrl = viewModel.user?.photoUrl.toString(),
+                        player2Percentage = viewModel.roomData?.opponentBoardPercentage ?: 0f
+                    )
+                }
                 SudokuBoard(
                     boardData = viewModel.sudokuBoard,
                     selectedTileIndices = viewModel.selectedTileIndices,

@@ -43,7 +43,8 @@ fun SudokuTopAppBar(
     togglePaused: () -> Unit,
     onBack: () -> Unit,
     difficulty: Difficulty,
-    seconds: Int = 0
+    seconds: Int = 0,
+    showPauseButton: Boolean = false
 ) {
     val difficultyFormatted = formatDifficulty(difficulty)
 
@@ -80,24 +81,26 @@ fun SudokuTopAppBar(
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(Modifier.width(10.dp))
-            TooltipBox(
-                positionProvider =
-                    TooltipDefaults.rememberTooltipPositionProvider(
-                        TooltipAnchorPosition.Above
-                    ),
-                tooltip = { PlainTooltip { Text(if (isPaused) "Resume" else "Pause") } },
-                state = rememberTooltipState(),
-            ) {
-                FilledTonalIconToggleButton(
-                    checked = isPaused,
-                    onCheckedChange = { togglePaused() },
-                    shapes = IconButtonDefaults.toggleableShapes(),
-                    modifier = Modifier.weight(1f)
+            if (showPauseButton) {
+                TooltipBox(
+                    positionProvider =
+                        TooltipDefaults.rememberTooltipPositionProvider(
+                            TooltipAnchorPosition.Above
+                        ),
+                    tooltip = { PlainTooltip { Text(if (isPaused) "Resume" else "Pause") } },
+                    state = rememberTooltipState(),
                 ) {
-                    Icon(
-                        imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
-                        contentDescription = ""
-                    )
+                    FilledTonalIconToggleButton(
+                        checked = isPaused,
+                        onCheckedChange = { togglePaused() },
+                        shapes = IconButtonDefaults.toggleableShapes(),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                            contentDescription = ""
+                        )
+                    }
                 }
             }
         },
