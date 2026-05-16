@@ -16,7 +16,8 @@ class RoomData(
     var flatOpponentBoard: List<SudokuTileData>? = null,
     var opponentReadyToPlay: Boolean = false, // This is true when the opponent has initialized sudoku view to start the timer
     var ownerBoardPercentage: Float = 0.0f,
-    var opponentBoardPercentage: Float = 0.0f
+    var opponentBoardPercentage: Float = 0.0f,
+    var winnerPath: String? = null,
 ) {
     @get:Exclude
     @set:Exclude
@@ -55,12 +56,23 @@ class RoomData(
         opponentBoard: List<List<SudokuTileData>>? = this.opponentBoard,
         opponentReadyToPlay: Boolean = this.opponentReadyToPlay,
         ownerBoardPercentage: Float = this.ownerBoardPercentage,
-        opponentBoardPercentage: Float = this.opponentBoardPercentage
+        opponentBoardPercentage: Float = this.opponentBoardPercentage,
+        winnerPath: String? = this.winnerPath
     ): RoomData {
         val newRoom = RoomData(
-            gameSettings, roomCode, ownerPath, opponentPath,
-            opponentReady, roomState.name, canonBoard,
-            null, null, opponentReadyToPlay, ownerBoardPercentage, opponentBoardPercentage
+            gameSettings,
+            roomCode,
+            ownerPath,
+            opponentPath,
+            opponentReady,
+            roomState.name,
+            canonBoard,
+            null,
+            null,
+            opponentReadyToPlay,
+            ownerBoardPercentage,
+            opponentBoardPercentage,
+            winnerPath
         )
         newRoom.ownerBoard = ownerBoard
         newRoom.opponentBoard = opponentBoard

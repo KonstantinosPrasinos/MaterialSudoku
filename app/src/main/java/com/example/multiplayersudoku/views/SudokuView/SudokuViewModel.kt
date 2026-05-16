@@ -142,6 +142,10 @@ class SudokuViewModel @Inject constructor(
                 if (opponent?.id == userId && sudokuBoard.isEmpty()) {
                     sudokuBoard = SudokuBoardData(roomData?.opponentBoard!!)
                 }
+
+                if (roomData?.winnerPath != null) {
+                    finalizeGame()
+                }
             }
         }
     }
@@ -460,8 +464,6 @@ class SudokuViewModel @Inject constructor(
         var newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
         val tileToUpdate = newBoard[row][col]
 
-        var userHasWon = false
-
         // Check if the tile is editable before changing it
         if (!tileToUpdate.isEditable) return
 
@@ -508,10 +510,18 @@ class SudokuViewModel @Inject constructor(
                 ) as MutableList<MutableList<SudokuTileData>>
 
             if (roomData != null) {
+                val userHadWon = roomData?.winnerPath != null
+                val winner = when {
+                    userHasWon && !userHadWon -> userId
+                    !userHasWon && userHadWon -> roomData?.winnerPath
+                    else -> null
+                }
+
                 if (roomData?.ownerPath == userId) {
                     roomData = roomData?.copy(
                         ownerBoard = newBoard,
-                        ownerBoardPercentage = calculateBoardFillPercentage(newBoard)
+                        ownerBoardPercentage = calculateBoardFillPercentage(newBoard),
+                        winnerPath = winner
                     )
 
                     viewModelScope.launch {
@@ -520,7 +530,8 @@ class SudokuViewModel @Inject constructor(
                 } else {
                     roomData = roomData?.copy(
                         opponentBoard = newBoard,
-                        opponentBoardPercentage = calculateBoardFillPercentage(newBoard)
+                        opponentBoardPercentage = calculateBoardFillPercentage(newBoard),
+                        winnerPath = winner
                     )
 
                     viewModelScope.launch {
@@ -547,6 +558,18 @@ class SudokuViewModel @Inject constructor(
         if (rowCompleted || colCompleted || gridCompleted) {
             runAnimations(tileToUpdate, rowCompleted, colCompleted, gridCompleted)
         }
+    }
+
+    fun solveBoard() {
+        val solvedBoardResult = attemptSolve(sudokuBoard.board)
+
+        sudokuBoard = sudokuBoard.copy(
+            board = solvedBoardResult.boardData
+        )
+
+        userHasWon = true
+
+        finalizeGame()
     }
 
     fun selectTile(row: Int?, col: Int?) {

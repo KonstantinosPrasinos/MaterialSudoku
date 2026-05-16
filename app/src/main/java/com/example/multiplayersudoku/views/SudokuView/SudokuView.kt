@@ -7,12 +7,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,6 +34,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.multiplayersudoku.BuildConfig
 import com.example.multiplayersudoku.R
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
@@ -207,10 +212,6 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?
             )
         }
 
-        if (viewModel.showGameEndDialog) {
-            EndDialogText(gameSettings.difficulty, viewModel.seconds, viewModel.userHasWon)
-        }
-
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
@@ -265,6 +266,18 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?
                     generateHint = viewModel::generateHint,
                     canGenerateHint = viewModel.hints < gameSettings.hints
                 )
+                if (BuildConfig.DEBUG) {
+                    FilledTonalIconButton(
+                        onClick = viewModel::solveBoard,
+                        shapes = IconButtonDefaults.shapes(),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lightbulb,
+                            contentDescription = ""
+                        )
+                    }
+                }
             }
         }
     }
