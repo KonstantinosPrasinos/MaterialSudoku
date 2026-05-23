@@ -4,6 +4,7 @@ import Player
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.classes.RoomData
 import com.example.multiplayersudoku.classes.RoomState
+import com.example.multiplayersudoku.services.BleService
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -18,7 +19,8 @@ import javax.inject.Inject
 
 class LobbyRepository @Inject constructor(
     private val rtdb: DatabaseReference,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val bleService: BleService
 ) {
     suspend fun generateUniqueRoomCode(): String {
         var roomCodeString: String
@@ -37,6 +39,25 @@ class LobbyRepository @Inject constructor(
         } while (roomCodeString.isEmpty())
 
         return roomCodeString
+    }
+
+    val isBleSupported: Boolean = bleService.hasBle
+
+    /**
+     * Converts the lobby details into a payload string and boots up the hardware.
+     */
+    fun hostLobby(lobbyId: String) {
+        if (!isBleSupported) return
+
+        // Hand it off to the service to start the GATT server and Advertiser
+        bleService.startAdvertisingLobby(lobbyId)
+    }
+
+    /**
+     * Cleanly tears down the GATT server and kills the radio advertisement.
+     */
+    fun closeLobby() {
+        bleService.stopAdvertisingLobby()
     }
 
     suspend fun getPlayerData(userId: String): Player? {
@@ -64,7 +85,7 @@ class LobbyRepository @Inject constructor(
         val room = rtdb.child("rooms").child(roomCode)
         room.child("opponentPath").setValue(userId).await()
 
-        val roomSnapshot = room.get().await();
+        val roomSnapshot = room.get().await()
 
         val roomData: RoomData =
             roomSnapshot.getValue(RoomData::class.java) ?: throw Exception("Room data is null")

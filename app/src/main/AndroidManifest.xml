@@ -4,6 +4,37 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- 1. Tell Android the app requires BLE hardware -->
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="true" />
+
+    <!-- 2. Modern Permissions (Android 12 / API 31 and higher) -->
+    <!-- Required for User B to look for User A's lobby -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
+
+    <!-- Required for User A to broadcast their lobby -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+
+    <!-- Required for both to establish the GATT server/client handshake connection -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+
+    <!-- 3. Legacy Permissions (Android 11 / API 30 and lower) -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+
+    <!-- Required for scanning on legacy devices (Bluetooth tracking could deduce location) -->
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30" />
+
     <application
         android:name=".SudokuApp"
         android:allowBackup="true"

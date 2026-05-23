@@ -17,6 +17,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -55,6 +56,9 @@ class LobbyViewModel @Inject constructor(
     var startButtonText: String by mutableStateOf("Waiting for opponent")
         private set
 
+    val isBleSupported = MutableStateFlow(repository.isBleSupported)
+    var isAdvertising: Boolean by mutableStateOf(false)
+        private set
 
     fun setGameDifficulty(difficulty: Difficulty) {
         roomData = roomData?.copy(
@@ -98,6 +102,18 @@ class LobbyViewModel @Inject constructor(
         owner = repository.getPlayerData(roomData?.ownerPath ?: "")
         if (roomData?.opponentPath != null) {
             opponent = repository.getPlayerData(roomData?.opponentPath ?: "")
+        }
+    }
+
+    fun toggleAdvertising() {
+        if (!isBleSupported.value || this.roomData?.roomCode == null) return
+
+        if (isAdvertising) {
+            isAdvertising = false
+            this.repository.closeLobby()
+        } else {
+            isAdvertising = true
+            this.repository.hostLobby(this.roomData!!.roomCode)
         }
     }
 
