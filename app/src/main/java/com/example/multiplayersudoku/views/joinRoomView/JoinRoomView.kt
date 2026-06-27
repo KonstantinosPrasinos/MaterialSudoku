@@ -42,7 +42,6 @@ import androidx.compose.foundation.text.input.then
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -77,7 +76,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -92,6 +90,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.multiplayersudoku.R
 import com.example.multiplayersudoku.components.ExpressiveWavyDivider
 import com.example.multiplayersudoku.ui.theme.FredokaFamily
@@ -118,11 +117,37 @@ fun JoinRoomView(
     val tooltipState = rememberTooltipState(isPersistent = false)
     val scope = rememberCoroutineScope()
 
-    // Required permissions for Bluetooth advertising and connection (SDK 31+)
-    val hostPermissions = arrayOf(
-        Manifest.permission.BLUETOOTH_ADVERTISE,
-        Manifest.permission.BLUETOOTH_CONNECT
-    )
+    // Required permissions for Bluetooth scanning, advertising, and connection based on API level
+    val hostPermissions = remember {
+        arrayOf(
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.BLUETOOTH_ADVERTISE,
+            Manifest.permission.BLUETOOTH_CONNECT
+        )
+    }
+
+    var hasPermissions by remember { mutableStateOf(false) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, context, hostPermissions) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            // After the user has navigated to the app again, check for permissions
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                val currentGranted = hostPermissions.all { permission ->
+                    androidx.core.content.ContextCompat.checkSelfPermission(
+                        context,
+                        permission
+                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                }
+                hasPermissions = currentGranted
+                viewModel.setHasPermissions(currentGranted)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // 2. Register the Permission Launcher Contract
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -130,15 +155,40 @@ fun JoinRoomView(
     ) { permissionsMap ->
         // Check if all requested permissions were approved by the user
         val allGranted = permissionsMap.values.all { it }
+        hasPermissions = allGranted
+        viewModel.setHasPermissions(allGranted)
 
         if (allGranted) {
             viewModel.startScanning()
         } else {
-            Toast.makeText(
-                context,
-                "Bluetooth permissions are required to find games.",
-                Toast.LENGTH_SHORT
-            ).show()
+            val activity = context as? android.app.Activity
+            val shouldShowRationale = hostPermissions.any { permission ->
+                activity?.let {
+                    androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(it, permission)
+                } ?: false
+            }
+
+            if (!shouldShowRationale) {
+                Toast.makeText(
+                    context,
+                    "Please enable nearby devices permissions in App Settings to scan for games.",
+                    Toast.LENGTH_LONG
+                ).show()
+                try {
+                    val intent = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = android.net.Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                } catch (e: Exception) {
+                    // Fallback if settings cannot be opened
+                }
+            } else {
+                Toast.makeText(
+                    context,
+                    "Bluetooth permissions are required to find games.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
 
@@ -146,13 +196,10 @@ fun JoinRoomView(
         viewModel.init(onNavigateToLobby)
     }
 
-    LaunchedEffect(viewModel.roomCodeState) {
-        snapshotFlow { viewModel.roomCodeState.text }
-            .collect { newText ->
-                if (newText.isNotEmpty()) {
-                    viewModel.resetRoomCodeError()
-                }
-            }
+    LaunchedEffect(hasPermissions) {
+        if (hasPermissions) {
+            viewModel.startScanning()
+        }
     }
 
     DisposableEffect(Unit) {
@@ -164,6 +211,22 @@ fun JoinRoomView(
     fun hideNearbyScanning() {
         scope.launch {
             viewModel.setNearbyScanning(false)
+            tooltipState.show()
+        }
+    }
+
+    fun showNearbyScanning() {
+        if (hasPermissions) {
+            viewModel.setNearbyScanning(true)
+            viewModel.startScanning()
+        } else {
+            permissionLauncher.launch(hostPermissions)
+        }
+    }
+
+    fun stopScanning() {
+        scope.launch {
+            viewModel.stopScanning()
             tooltipState.show()
         }
     }
@@ -202,7 +265,8 @@ fun JoinRoomView(
                 actions = {
                     if (!viewModel.showNearbyScanning) {
                         TooltipBox(
-                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Below),
+                            positionProvider = TooltipDefaults
+                                .rememberTooltipPositionProvider(TooltipAnchorPosition.Below),
                             tooltip = {
                                 PlainTooltip {
                                     Text("You can enable nearby scanning here")
@@ -211,7 +275,7 @@ fun JoinRoomView(
                             state = tooltipState
                         ) {
                             IconButton(
-                                onClick = { viewModel.setNearbyScanning(true) },
+                                onClick = { showNearbyScanning() },
                                 shapes = IconButtonDefaults.shapes(),
                             ) {
                                 Icon(
@@ -388,7 +452,7 @@ fun JoinRoomView(
                                                     Spacer(Modifier.weight(1f))
                                                     TextButton(
                                                         shapes = ButtonDefaults.shapes(),
-                                                        onClick = { viewModel.stopScanning() }
+                                                        onClick = { stopScanning() }
                                                     ) {
                                                         Text(
                                                             "Stop",
@@ -486,8 +550,8 @@ fun JoinRoomView(
                                                         )
                                                 ) {
                                                     Icon(
-                                                        imageVector = Icons.Default.Bluetooth,
-                                                        contentDescription = "Ready",
+                                                        painter = painterResource(id = R.drawable.nearby),
+                                                        contentDescription = "Nearby",
                                                         modifier = Modifier.padding(4.dp),
                                                         tint = MaterialTheme.colorScheme.onPrimaryContainer
                                                     )
@@ -521,7 +585,13 @@ fun JoinRoomView(
                                                     )
                                                 }
                                                 Button(
-                                                    onClick = { viewModel.startScanning() },
+                                                    onClick = {
+                                                        if (hasPermissions) {
+                                                            viewModel.startScanning()
+                                                        } else {
+                                                            permissionLauncher.launch(hostPermissions)
+                                                        }
+                                                    },
                                                     shapes = ButtonDefaults.shapes(),
                                                     modifier = Modifier
                                                         .weight(1f),

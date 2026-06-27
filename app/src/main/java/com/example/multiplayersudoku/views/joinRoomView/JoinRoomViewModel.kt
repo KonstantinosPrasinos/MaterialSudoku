@@ -37,6 +37,9 @@ class JoinRoomViewModel @Inject constructor(
 
     val isBleSupported: Boolean = bleService.hasBle
 
+    var hasNearbyScanningPermissions by mutableStateOf(false)
+        private set
+
     var isScanning by mutableStateOf(false)
         private set
 
@@ -59,10 +62,11 @@ class JoinRoomViewModel @Inject constructor(
     lateinit var onNavigateToLobby: (LobbyArgs) -> Unit
 
     fun init(onNavigateToLobby: (LobbyArgs) -> Unit) {
-        // Check for nearby scanning permissions
-
         this.onNavigateToLobby = onNavigateToLobby
-        this.startScanning()
+    }
+
+    fun setHasPermissions(hasPermissions: Boolean) {
+        hasNearbyScanningPermissions = hasPermissions
     }
 
     fun attemptJoinRoom() {
@@ -140,6 +144,7 @@ class JoinRoomViewModel @Inject constructor(
     fun stopScanning() {
         if (!isScanning) return
         isScanning = false
+        showNearbyScanning = false
         bleService.stopScanningForLobbies()
 
         val roomCodes = activeListeners.keys.toList()
