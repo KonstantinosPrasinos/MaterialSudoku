@@ -198,59 +198,84 @@ fun MainView(
                 horizontalAlignment = Alignment.CenterHorizontally,
 
                 ) {
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
                 ) {
-                    // 1. Get the current screen density
-                    val density = LocalDensity.current
-
-                    // 2. Fetch the typography font size (which is in sp)
-                    val baseFontSize = MaterialTheme.typography.titleMedium.fontSize
-
-                    // 3. Multiply by 20 and convert it to Dp
-                    val twentyEmDp = with(density) {
-                        (baseFontSize * 10).toDp()
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "Welcome back,",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        )
+                        Text(
+                            text = if (user != null) user?.displayName ?: "Player" else "Player",
+                            style = TextStyle(
+                                fontFamily = FredokaFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = MaterialTheme.typography.headlineMedium.fontSize
+                            ),
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
-                    StreakSurface(
-                        surfaceColor = MaterialTheme.extendedColors.redBg,
-                        surfaceVariantColor = MaterialTheme.extendedColors.redIconBg,
-                        onSurfaceColor = MaterialTheme.extendedColors.redText,
-                        title = "Win streak",
-                        value = statisticsUiState.winStreak.toString(),
-                        onClick = { onNavigateToStatistics() },
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
                         modifier = Modifier
-                            .width(twentyEmDp),
-                        iconDescription = "Streak icon",
-                        icon = Icons.Outlined.LocalFireDepartment,
-                    )
-                    StreakSurface(
-                        surfaceColor = MaterialTheme.extendedColors.purpleBg,
-                        surfaceVariantColor = MaterialTheme.extendedColors.purpleIconBg,
-                        onSurfaceColor = MaterialTheme.extendedColors.purpleText,
-                        title = "Completion",
-                        value = completionPercentage,
-                        onClick = { onNavigateToStatistics() },
-                        modifier = Modifier
-                            .width(twentyEmDp),
-                        iconDescription = "Completion percentage icon",
-                        painter = painterResource(id = R.drawable.ic_chess_queen),
-                    )
-                    StreakSurface(
-                        surfaceColor = MaterialTheme.extendedColors.tealBg,
-                        surfaceVariantColor = MaterialTheme.extendedColors.tealIconBg,
-                        onSurfaceColor = MaterialTheme.extendedColors.tealText,
-                        title = "Best time",
-                        value = formatDuration(statisticsUiState.bestTime),
-                        onClick = { onNavigateToStatistics() },
-                        modifier = Modifier
-                            .width(twentyEmDp),
-                        iconDescription = "Timer icon",
-                        icon = Icons.Outlined.Timer,
-                    )
+                            .weight(1f),
+                    ) {
+                        // 1. Get the current screen density
+                        val density = LocalDensity.current
+
+                        // 2. Fetch the typography font size (which is in sp)
+                        val baseFontSize = MaterialTheme.typography.titleMedium.fontSize
+
+                        // 3. Multiply by 20 and convert it to Dp
+                        val twentyEmDp = with(density) {
+                            (baseFontSize * 10).toDp()
+                        }
+                        StreakSurface(
+                            surfaceColor = MaterialTheme.extendedColors.redBg,
+                            surfaceVariantColor = MaterialTheme.extendedColors.redIconBg,
+                            onSurfaceColor = MaterialTheme.extendedColors.redText,
+                            title = "Win streak",
+                            value = statisticsUiState.winStreak.toString(),
+                            onClick = { onNavigateToStatistics() },
+                            modifier = Modifier
+                                .width(twentyEmDp),
+                            iconDescription = "Streak icon",
+                            icon = Icons.Outlined.LocalFireDepartment,
+                        )
+                        StreakSurface(
+                            surfaceColor = MaterialTheme.extendedColors.purpleBg,
+                            surfaceVariantColor = MaterialTheme.extendedColors.purpleIconBg,
+                            onSurfaceColor = MaterialTheme.extendedColors.purpleText,
+                            title = "Completion",
+                            value = completionPercentage,
+                            onClick = { onNavigateToStatistics() },
+                            modifier = Modifier
+                                .width(twentyEmDp),
+                            iconDescription = "Completion percentage icon",
+                            painter = painterResource(id = R.drawable.ic_chess_queen),
+                        )
+                        StreakSurface(
+                            surfaceColor = MaterialTheme.extendedColors.tealBg,
+                            surfaceVariantColor = MaterialTheme.extendedColors.tealIconBg,
+                            onSurfaceColor = MaterialTheme.extendedColors.tealText,
+                            title = "Best time",
+                            value = formatDuration(statisticsUiState.bestTime),
+                            onClick = { onNavigateToStatistics() },
+                            modifier = Modifier
+                                .width(twentyEmDp),
+                            iconDescription = "Timer icon",
+                            icon = Icons.Outlined.Timer,
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 Surface(
