@@ -20,6 +20,8 @@ credentialsPlayServicesAuth = "1.5.0"
 googleid = "1.1.1"
 foundation = "1.10.0"
 uiText = "1.10.1"
+uiGraphics = "1.11.2"
+animation = "1.11.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -45,6 +47,8 @@ androidx-credentials-play-services-auth = { group = "androidx.credentials", name
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphics" }
+androidx-compose-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "animation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

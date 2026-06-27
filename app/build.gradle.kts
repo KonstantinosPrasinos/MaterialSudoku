@@ -55,6 +55,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -68,6 +69,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.compose.animation.core)
+    implementation(libs.androidx.ui.graphics)
     implementation(libs.firebase.auth)
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)

@@ -1,12 +1,17 @@
 package com.example.multiplayersudoku.views.lobbyView
 
+import android.Manifest
 import android.content.ClipData
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
@@ -37,10 +43,12 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TooltipAnchorPosition
@@ -49,6 +57,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTooltipState
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -56,6 +65,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -81,17 +91,42 @@ fun LobbyView(
     viewModel: LobbyViewModel = hiltViewModel(),
     onNavigateToSudoku: (GameSettings, String) -> Unit
 ) {
+    val context = LocalContext.current
     val layoutDirection = LocalLayoutDirection.current
     val clipboardManager = LocalClipboard.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        viewModel.init(lobbyArgs, onBack, onNavigateToSudoku)
-    }
-
     BackHandler(enabled = !viewModel.showExitConfirmDialog) {
         viewModel.toggleExitDialogVisibility()
+    }
+
+    // Required permissions for Bluetooth advertising and connection (SDK 31+)
+    val hostPermissions = arrayOf(
+        Manifest.permission.BLUETOOTH_ADVERTISE,
+        Manifest.permission.BLUETOOTH_CONNECT
+    )
+
+    // 2. Register the Permission Launcher Contract
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissionsMap ->
+        // Check if all requested permissions were approved by the user
+        val allGranted = permissionsMap.values.all { it }
+
+        if (allGranted) {
+            viewModel.toggleAdvertising()
+        } else {
+            Toast.makeText(
+                context,
+                "Bluetooth permissions are required to host.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.init(lobbyArgs, onBack, onNavigateToSudoku)
     }
 
     fun copyCode() {
@@ -189,13 +224,62 @@ fun LobbyView(
                     }
                 }
             }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                tonalElevation = 1.dp,
             ) {
-                Text("2")
-                Text("-")
-                Text("1")
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("2")
+                    Text("-")
+                    Text("1")
+                }
+            }
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp),
+                shape = RoundedCornerShape(16.dp),
+                tonalElevation = 3.dp
+            ) {
+                Column(modifier = Modifier.padding(10.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    shape = MaterialShapes.Cookie12Sided.toShape(),
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Bluetooth,
+                                contentDescription = "Ready",
+                                modifier = Modifier.padding(4.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Text("Nearby play", style = MaterialTheme.typography.titleLargeEmphasized)
+                        Spacer(Modifier.weight(1f))
+                        Switch(
+                            checked = viewModel.isAdvertising,
+                            onCheckedChange = { checked ->
+                                if (checked) permissionLauncher.launch(hostPermissions)
+                                else viewModel.toggleAdvertising()
+                            }
+                        )
+                    }
+                    Text(
+                        "Allow players on nearby devices to find and join your games via Bluetooth",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.67f)
+                    )
+                }
             }
             Spacer(Modifier.weight(1f))
             Surface(
