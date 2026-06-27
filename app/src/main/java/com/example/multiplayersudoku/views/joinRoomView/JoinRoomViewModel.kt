@@ -59,6 +59,8 @@ class JoinRoomViewModel @Inject constructor(
     lateinit var onNavigateToLobby: (LobbyArgs) -> Unit
 
     fun init(onNavigateToLobby: (LobbyArgs) -> Unit) {
+        // Check for nearby scanning permissions
+
         this.onNavigateToLobby = onNavigateToLobby
         this.startScanning()
     }
@@ -147,8 +149,8 @@ class JoinRoomViewModel @Inject constructor(
         nearbyGames = emptyList()
     }
 
-    fun hideNearbyScanning() {
-        showNearbyScanning = false
+    fun setNearbyScanning(value: Boolean = false) {
+        showNearbyScanning = value
     }
 
     private fun setupRoomListener(roomCode: String, address: String) {
