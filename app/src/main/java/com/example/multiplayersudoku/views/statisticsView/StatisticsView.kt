@@ -148,7 +148,8 @@ fun StatisticsView(onBack: () -> Unit) {
                     bestTime = uiState.bestTime,
                     totalGames = uiState.totalGames,
                     completedGames = uiState.completedGames,
-                    totalDuration = uiState.totalDuration
+                    totalDuration = uiState.totalDuration,
+                    winStreak = uiState.winStreak
                 )
             }
         }
@@ -163,7 +164,8 @@ fun StatisticsColumn(
     bestTime: Long?,
     totalGames: Int,
     completedGames: Int,
-    totalDuration: Long?
+    totalDuration: Long?,
+    winStreak: Int
 ) {
     val completionPercentage = if (totalGames > 0) (completedGames.toFloat() / totalGames.toFloat()) * 100 else 0f
     // 5. Display the data
@@ -198,7 +200,7 @@ fun StatisticsColumn(
                     }
                 )
                 ListItem(
-                    order = ListItemOrder.LAST,
+                    order = ListItemOrder.MIDDLE,
                     content = {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -208,6 +210,22 @@ fun StatisticsColumn(
                             Text("Completion percentage", style = MaterialTheme.typography.bodyLargeEmphasized)
                             Text(
                                 "%.1f%%".format(completionPercentage),
+                                style = MaterialTheme.typography.bodyLargeEmphasized
+                            )
+                        }
+                    }
+                )
+                ListItem(
+                    order = ListItemOrder.LAST,
+                    content = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Current win streak", style = MaterialTheme.typography.bodyLargeEmphasized)
+                            Text(
+                                winStreak.toString(),
                                 style = MaterialTheme.typography.bodyLargeEmphasized
                             )
                         }

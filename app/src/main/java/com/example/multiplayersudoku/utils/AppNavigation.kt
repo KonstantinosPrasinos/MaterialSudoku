@@ -87,6 +87,9 @@ fun AppNavigation() {
                     onNavigateToJoinRoom = {
                         navController.navigate(AppView.JOIN_ROOM_VIEW.name)
                     },
+                    onNavigateToStatistics = {
+                        navController.navigate(AppView.STATISTICS_VIEW.name)
+                    },
                     sharedTransitionScope = this@SharedTransitionLayout,
                     animatedVisibilityScope = this@composable
                 )

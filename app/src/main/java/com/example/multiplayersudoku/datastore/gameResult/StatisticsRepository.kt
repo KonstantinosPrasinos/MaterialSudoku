@@ -7,6 +7,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
 
@@ -93,5 +94,36 @@ class StatisticsRepository(private val dao: GameResultDao) {
     fun getCompletedGames(): Flow<Int> = dao.getCompletedGames()
     fun getAllResults(): Flow<List<GameResult>> = dao.getAllResults()
 
-    fun getStatisticsSummary(difficulty: String?): Flow<StatisticsSummary> = dao.getStatisticsSummary(difficulty)
+    fun getStatisticsSummary(difficulty: String?): Flow<StatisticsSummary> {
+        return combine(
+            dao.getStatisticsSummary(difficulty),
+            dao.getAllResults()
+        ) { summary, results ->
+            val filteredResults = if (difficulty != null) {
+                results.filter { it.difficulty == difficulty }
+            } else {
+                results
+            }
+            val winStreak = calculateWinStreak(filteredResults)
+            summary.copy(winStreak = winStreak)
+        }
+    }
+
+    private fun calculateWinStreak(results: List<GameResult>): Int {
+        val sorted = results.sortedByDescending { it.timestamp }
+        var streak = 0
+        for (result in sorted) {
+            val isWin = if (result.isMultiplayer) {
+                result.wonAgainstOpponent == true
+            } else {
+                result.wasCompleted
+            }
+            if (isWin) {
+                streak++
+            } else {
+                break
+            }
+        }
+        return streak
+    }
 }

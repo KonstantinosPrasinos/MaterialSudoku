@@ -5,11 +5,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.multiplayersudoku.classes.StatisticsUiState
 import com.example.multiplayersudoku.datastore.FirebaseAuthRepository
 import com.example.multiplayersudoku.datastore.gameResult.StatisticsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -31,6 +34,25 @@ class MainViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = null
     )
+
+    val statisticsUiState: StateFlow<StatisticsUiState> = statisticsRepository
+        .getStatisticsSummary(null)
+        .map { summary ->
+            StatisticsUiState(
+                averageDuration = summary.averageDuration,
+                bestTime = summary.bestTime,
+                totalGames = summary.totalGames,
+                completedGames = summary.completedGames,
+                totalDuration = summary.totalDuration,
+                winStreak = summary.winStreak,
+                isLoading = false
+            )
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = StatisticsUiState(isLoading = true)
+        )
 
     fun init(onNavigateToJoinRoom: () -> Unit) {
         this.onNavigateToJoinRoom = onNavigateToJoinRoom

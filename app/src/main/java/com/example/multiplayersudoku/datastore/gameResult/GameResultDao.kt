@@ -53,7 +53,8 @@ interface GameResultDao {
         MIN(CASE WHEN wasCompleted = 1 THEN durationSeconds ELSE NULL END) as bestTime,
         COUNT(*) as totalGames,
         SUM(CASE WHEN wasCompleted = 1 THEN 1 ELSE 0 END) as completedGames,
-        SUM(durationSeconds) as totalDuration
+        SUM(durationSeconds) as totalDuration,
+        0 as winStreak
     FROM game_results 
     WHERE (:difficulty IS NULL OR difficulty = :difficulty)
 """

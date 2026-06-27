@@ -3,6 +3,7 @@ package com.example.multiplayersudoku.views.statisticsView
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.multiplayersudoku.classes.Difficulty
+import com.example.multiplayersudoku.classes.StatisticsUiState
 import com.example.multiplayersudoku.datastore.gameResult.StatisticsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,15 +15,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
-
-data class StatisticsUiState(
-    val averageDuration: Long? = null,
-    val bestTime: Long? = null,
-    val totalGames: Int = 0,
-    val completedGames: Int = 0,
-    val totalDuration: Long? = null,
-    val isLoading: Boolean = true
-)
 
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
@@ -48,6 +40,7 @@ class StatisticsViewModel @Inject constructor(
                 totalGames = summary.totalGames,
                 completedGames = summary.completedGames,
                 totalDuration = summary.totalDuration,
+                winStreak = summary.winStreak,
                 isLoading = false
             )
         }

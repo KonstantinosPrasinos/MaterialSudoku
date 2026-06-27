@@ -5,25 +5,35 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocalFireDepartment
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -36,17 +46,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.multiplayersudoku.R
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.components.GameSettingsBottomSheet
 import com.example.multiplayersudoku.components.SignInModal
 import com.example.multiplayersudoku.components.UserIcon
 import com.example.multiplayersudoku.ui.theme.FredokaFamily
+import com.example.multiplayersudoku.ui.theme.extendedColors
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
@@ -55,6 +71,7 @@ fun MainView(
     onNavigateToSudoku: (gameSettings: GameSettings) -> Unit,
     onNavigateToJoinRoom: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToStatistics: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope
 ) {
@@ -76,6 +93,27 @@ fun MainView(
     var selectedHintsOption by remember { mutableStateOf(hintsOptions[0]) }
 
     val user by viewModel.currentUser.collectAsState()
+    val statisticsUiState by viewModel.statisticsUiState.collectAsState()
+
+    val completionPercentage = remember(statisticsUiState) {
+        if (statisticsUiState.totalGames > 0) {
+            String.format("%.1f%%", (statisticsUiState.completedGames.toFloat() / statisticsUiState.totalGames * 100))
+        } else {
+            "0.0%"
+        }
+    }
+
+    fun formatDuration(seconds: Long?): String {
+        if (seconds == null || seconds <= 0) return "--:--"
+        val h = seconds / 3600
+        val m = (seconds % 3600) / 60
+        val s = seconds % 60
+        return if (h > 0) {
+            String.format("%02d:%02d:%02d", h, m, s)
+        } else {
+            String.format("%02d:%02d", m, s)
+        }
+    }
 
     fun startSoloGame() {
         val gameSettings = GameSettings()
@@ -106,12 +144,22 @@ fun MainView(
     with(sharedTransitionScope) {
         Scaffold(
             topBar = {
-                TopAppBar(
+                CenterAlignedTopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background,
                         titleContentColor = MaterialTheme.colorScheme.primary,
                     ),
-                    title = {},
+                    title = {
+                        Text(
+                            "Material sudoku",
+                            style = TextStyle(
+                                fontFamily = FredokaFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = MaterialTheme.typography.titleLarge.fontSize
+                            ),
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                    },
                     actions = {
                         Surface(
                             shape = RoundedCornerShape(
@@ -150,15 +198,60 @@ fun MainView(
                 horizontalAlignment = Alignment.CenterHorizontally,
 
                 ) {
-                Text(
-                    "Material Sudoku",
-                    style = TextStyle(
-                        fontFamily = FredokaFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 42.sp
-                    ),
-                    color = MaterialTheme.colorScheme.secondary,
-                )
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
+                ) {
+                    // 1. Get the current screen density
+                    val density = LocalDensity.current
+
+                    // 2. Fetch the typography font size (which is in sp)
+                    val baseFontSize = MaterialTheme.typography.titleMedium.fontSize
+
+                    // 3. Multiply by 20 and convert it to Dp
+                    val twentyEmDp = with(density) {
+                        (baseFontSize * 10).toDp()
+                    }
+                    StreakSurface(
+                        surfaceColor = MaterialTheme.extendedColors.redBg,
+                        surfaceVariantColor = MaterialTheme.extendedColors.redIconBg,
+                        onSurfaceColor = MaterialTheme.extendedColors.redText,
+                        title = "Win streak",
+                        value = statisticsUiState.winStreak.toString(),
+                        onClick = { onNavigateToStatistics() },
+                        modifier = Modifier
+                            .width(twentyEmDp),
+                        iconDescription = "Streak icon",
+                        icon = Icons.Outlined.LocalFireDepartment,
+                    )
+                    StreakSurface(
+                        surfaceColor = MaterialTheme.extendedColors.purpleBg,
+                        surfaceVariantColor = MaterialTheme.extendedColors.purpleIconBg,
+                        onSurfaceColor = MaterialTheme.extendedColors.purpleText,
+                        title = "Completion",
+                        value = completionPercentage,
+                        onClick = { onNavigateToStatistics() },
+                        modifier = Modifier
+                            .width(twentyEmDp),
+                        iconDescription = "Completion percentage icon",
+                        painter = painterResource(id = R.drawable.ic_chess_queen),
+                    )
+                    StreakSurface(
+                        surfaceColor = MaterialTheme.extendedColors.tealBg,
+                        surfaceVariantColor = MaterialTheme.extendedColors.tealIconBg,
+                        onSurfaceColor = MaterialTheme.extendedColors.tealText,
+                        title = "Best time",
+                        value = formatDuration(statisticsUiState.bestTime),
+                        onClick = { onNavigateToStatistics() },
+                        modifier = Modifier
+                            .width(twentyEmDp),
+                        iconDescription = "Timer icon",
+                        icon = Icons.Outlined.Timer,
+                    )
+                }
                 Spacer(modifier = Modifier.weight(1f))
                 Surface(
                     shape = RoundedCornerShape(16.dp),
@@ -219,6 +312,77 @@ fun MainView(
                 if (viewModel.showLoginModal) {
                     SignInModal(onDismissRequest = ::closeLoginBottomSheet, loginSheetState, snackbarHostState)
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun StreakSurface(
+    surfaceColor: Color,
+    surfaceVariantColor: Color,
+    onSurfaceColor: Color,
+    title: String,
+    value: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    iconDescription: String,
+    icon: ImageVector = Icons.Outlined.LocalFireDepartment,
+    painter: Painter? = null
+) {
+    Surface(
+        onClick = onClick,
+        color = surfaceColor,
+        shape = RoundedCornerShape(100),
+        modifier = modifier
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.height(IntrinsicSize.Min)
+        ) {
+            Surface(
+                color = surfaceVariantColor,
+                shape = RoundedCornerShape(100),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .aspectRatio(1f)
+                    .padding(4.dp)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (painter == null) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = iconDescription,
+                            tint = onSurfaceColor
+                        )
+                    } else {
+                        Icon(
+                            painter,
+                            contentDescription = iconDescription,
+                            tint = onSurfaceColor
+                        )
+                    }
+
+                }
+            }
+            Column(
+                modifier = Modifier.padding(end = 12.dp, top = 4.dp, bottom = 4.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall
+                        .copy(color = onSurfaceColor.copy(alpha = 0.67f))
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleMediumEmphasized
+                        .copy(color = onSurfaceColor)
+                )
             }
         }
     }
