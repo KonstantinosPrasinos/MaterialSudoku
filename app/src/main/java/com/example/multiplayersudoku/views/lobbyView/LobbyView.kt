@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,7 +26,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -67,10 +68,7 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.components.GameSettingsBottomSheet
@@ -281,64 +279,91 @@ fun LobbyView(
                     )
                 }
             }
-            Spacer(Modifier.weight(1f))
-            Surface(
-                shape = RoundedCornerShape(16.dp),
+            Row(
                 modifier = Modifier
-                    .fillMaxWidth(),
-                tonalElevation = 3.dp
+                    .fillMaxWidth()
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Surface(
+                    tonalElevation = 3.dp,
+                    modifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f),
+                    shape = RoundedCornerShape(16.dp),
                 ) {
-                    TextButton(
-                        onClick = { copyCode() },
-                        shapes = ButtonDefaults.shapes(),
+                    Column(
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.padding(10.dp),
                     ) {
+//                        Text("Lobby room code", style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.67f)))
                         Text(
                             viewModel.roomData?.roomCode ?: "Whoops",
-                            style = TextStyle(
+                            style = MaterialTheme.typography.displayMediumEmphasized.copy(
                                 fontFamily = FredokaFamily,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 48.sp
+                                color = MaterialTheme.colorScheme.secondary
                             )
                         )
-                        Spacer(Modifier.width(16.dp))
-                        Icon(
-                            imageVector = Icons.Filled.ContentCopy,
-                            contentDescription = "Copy room code",
-                            Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                        )
+                        Text("Share this code with your friend to play together", style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.67f)))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            FilledIconButton(
+                                shapes = IconButtonDefaults.shapes(),
+                                onClick = { copyCode() }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.ContentCopy,
+                                    contentDescription = "Copy room code"
+                                )
+                            }
+                            FilledIconButton(
+                                shapes = IconButtonDefaults.shapes(),
+                                onClick = { }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Share,
+                                    contentDescription = "Share room code"
+                                )
+                            }
+                        }
                     }
-                    Row(
+                }
+                Surface(
+                    tonalElevation = 3.dp,
+                    modifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.padding(10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Difficulty: ", style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            "${viewModel.roomData?.gameSettings?.difficultyName}",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.bodyMediumEmphasized
-                        )
-                        Spacer(Modifier.weight(1f))
-                        Text("Mistakes: ", style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            "${viewModel.roomData?.gameSettings?.mistakes}",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.bodyMediumEmphasized
-                        )
-                        Spacer(Modifier.weight(1f))
-                        Text("Hints: ", style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            "${viewModel.roomData?.gameSettings?.hints}",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.bodyMediumEmphasized
-                        )
-                        Spacer(Modifier.weight(1f))
+                        Row {
+                            Text("Difficulty: ", style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                "${viewModel.roomData?.gameSettings?.difficultyName}",
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodyLargeEmphasized
+                            )
+                        }
+                        Row {
+                            Text("Mistakes: ", style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                "${viewModel.roomData?.gameSettings?.mistakes}",
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodyLargeEmphasized
+                            )
+                        }
+                        Row {
+                            Text("Hints: ", style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                "${viewModel.roomData?.gameSettings?.hints}",
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodyLargeEmphasized
+                            )
+                        }
                         FilledIconButton(
                             onClick = viewModel::toggleGameSettingsBottomSheetVisibility,
                             shapes = IconButtonDefaults.shapes(),
@@ -349,46 +374,45 @@ fun LobbyView(
                             )
                         }
                     }
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        if (viewModel.isOwner) {
-                            Button(
-                                enabled = viewModel.roomData?.opponentReady == true,
-                                onClick = viewModel::startGame,
-                                shapes = ButtonDefaults.shapes(),
-                                modifier = Modifier
-                                    .weight(1.5f)
-                                    .heightIn(min = ButtonDefaults.MediumContainerHeight)
-                                    .padding(bottom = innerPadding.calculateBottomPadding()),
-                                contentPadding = ButtonDefaults.MediumContentPadding
-                            ) {
-                                Text(
-                                    viewModel.startButtonText,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
-                            }
-                        }
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            if (viewModel.isOwner) {
+                Button(
+                    enabled = viewModel.roomData?.opponentReady == true,
+                    onClick = viewModel::startGame,
+                    shapes = ButtonDefaults.shapes(),
+                    modifier = Modifier
+                        .heightIn(min = ButtonDefaults.MediumContainerHeight)
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                        .padding(bottom = innerPadding.calculateBottomPadding()),
+                    contentPadding = ButtonDefaults.MediumContentPadding
+                ) {
+                    Text(
+                        viewModel.startButtonText,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
 
-                        if (!viewModel.isOwner) {
-                            Button(
-                                onClick = viewModel::toggleReady,
-                                shapes = ButtonDefaults.shapes(),
-                                modifier = Modifier
-                                    .weight(1.5f)
-                                    .heightIn(min = ButtonDefaults.MediumContainerHeight)
-                                    .padding(bottom = innerPadding.calculateBottomPadding()),
-                                contentPadding = ButtonDefaults.MediumContentPadding
-                            ) {
-                                Text(
-                                    if (viewModel.roomData?.opponentReady == true) "Unready" else "Ready",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
-                            }
-                        }
-                    }
+            if (!viewModel.isOwner) {
+                Button(
+                    onClick = viewModel::toggleReady,
+                    shapes = ButtonDefaults.shapes(),
+                    modifier = Modifier
+                        .heightIn(min = ButtonDefaults.MediumContainerHeight)
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                        .padding(bottom = innerPadding.calculateBottomPadding()),
+                    contentPadding = ButtonDefaults.MediumContentPadding
+                ) {
+                    Text(
+                        if (viewModel.roomData?.opponentReady == true) "Unready" else "Ready",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
                 }
             }
         }
