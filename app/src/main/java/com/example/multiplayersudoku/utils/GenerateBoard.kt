@@ -2,6 +2,7 @@ package com.example.multiplayersudoku.utils
 
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.SudokuTileData
+import kotlinx.coroutines.yield
 
 fun checkBoardFilled(boardData: List<List<SudokuTileData>>): Boolean {
     for (row in boardData) {
@@ -73,13 +74,14 @@ fun generateFilledBoard(): List<List<SudokuTileData>> {
     return board
 }
 
-fun generateBoard(difficulty: Difficulty = Difficulty.EASY): List<List<SudokuTileData>> {
+suspend fun generateBoard(difficulty: Difficulty = Difficulty.EASY): List<List<SudokuTileData>> {
     // Generate a filled board
     val board = generateFilledBoard()
     var notSolved: Boolean
     var newBoard: List<List<SudokuTileData>>
 
     do {
+        yield()
         // Create a copy of the board
         newBoard = board.map { row ->
             row.map { tile ->

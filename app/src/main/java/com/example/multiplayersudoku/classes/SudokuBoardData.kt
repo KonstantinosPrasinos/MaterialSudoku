@@ -21,7 +21,7 @@ data class SudokuBoardData(
             return SudokuBoardData(boardData)
         }
 
-        fun generateRandom(difficulty: Difficulty = Difficulty.EASY): SudokuBoardData {
+        suspend fun generateRandom(difficulty: Difficulty = Difficulty.EASY): SudokuBoardData {
             return SudokuBoardData(generateBoard(difficulty))
         }
 

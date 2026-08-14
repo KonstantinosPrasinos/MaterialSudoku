@@ -96,9 +96,12 @@ class SudokuViewModel @Inject constructor(
         private set
 
     private var timerJob: Job? = null
+    private var isInitialized = false
 
-    private fun initializeMultiplayerAsOwner() {
-        val newSudokuBoard = SudokuBoardData.generateRandom(gameSettings.difficulty)
+    private suspend fun initializeMultiplayerAsOwner() {
+        val newSudokuBoard = withContext(Dispatchers.Default) {
+            SudokuBoardData.generateRandom(gameSettings.difficulty)
+        }
         val canonBoard =
             newSudokuBoard.board.map { it.map { tile -> if (tile.value != null) tile.value else -1 } as List<Int> }
         val updatedRoomData = roomData?.copy(
@@ -108,7 +111,7 @@ class SudokuViewModel @Inject constructor(
         )
 
         // Update the local state on the Main thread
-        viewModelScope.launch(Dispatchers.Main) {
+        withContext(Dispatchers.Main) {
             sudokuBoard = newSudokuBoard
             roomData = updatedRoomData
         }
@@ -168,9 +171,11 @@ class SudokuViewModel @Inject constructor(
     }
 
     fun init(settings: GameSettings, roomCode: String?) {
+        if (isInitialized) return
+        isInitialized = true
+
         gameSettings = settings
         user = Firebase.auth.currentUser
-        // Don't set isLoading here, it's true by default
 
         viewModelScope.launch { // The parent coroutine
             try {
@@ -201,6 +206,7 @@ class SudokuViewModel @Inject constructor(
                     // --- Solo Player Logic ---
                     // Generate the board on the Default dispatcher (for CPU-bound work)
                     val newBoard = withContext(Dispatchers.Default) {
+                        delay(300) // Delay to let navigation slide transition finish smoothly
                         SudokuBoardData.generateRandom(gameSettings.difficulty)
                     }
                     // Update the UI state on the Main thread

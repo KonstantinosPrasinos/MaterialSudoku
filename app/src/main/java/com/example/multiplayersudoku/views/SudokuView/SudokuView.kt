@@ -123,12 +123,9 @@ fun EndDialogText(difficulty: Difficulty, seconds: Int, userHasWon: Boolean) {
 fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val viewModel: SudokuViewModel = hiltViewModel()
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        scope.launch {
-            viewModel.init(gameSettings, roomCode)
-        }
+        viewModel.init(gameSettings, roomCode)
     }
 
     BackHandler(enabled = !viewModel.showExitDialog) {

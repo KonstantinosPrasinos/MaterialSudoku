@@ -279,7 +279,7 @@ fun JoinRoomView(
                                 shapes = IconButtonDefaults.shapes(),
                             ) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.nearby),
+                                    painter = painterResource(id = R.drawable.ic_chess_queen),
                                     contentDescription = "Nearby",
                                 )
                             }
@@ -550,7 +550,7 @@ fun JoinRoomView(
                                                         )
                                                 ) {
                                                     Icon(
-                                                        painter = painterResource(id = R.drawable.nearby),
+                                                        painter = painterResource(id = R.drawable.ic_chess_queen),
                                                         contentDescription = "Nearby",
                                                         modifier = Modifier.padding(4.dp),
                                                         tint = MaterialTheme.colorScheme.onPrimaryContainer
