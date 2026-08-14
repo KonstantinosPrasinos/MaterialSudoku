@@ -240,7 +240,7 @@ fun SudokuTile(
 
         contentAlignment = Alignment.Center
     ) {
-        if (tileData.value == null) Fixed3x3Grid(
+        if (tileData.value == null && tileData.notes.isNotEmpty()) Fixed3x3Grid(
             notedNumbers = tileData.notes,
             textColor = textColor.value
         )
