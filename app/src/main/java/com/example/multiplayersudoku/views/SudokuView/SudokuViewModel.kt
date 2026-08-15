@@ -4,6 +4,7 @@ import Player
 import android.content.ContentValues.TAG
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -65,7 +66,7 @@ class SudokuViewModel @Inject constructor(
     var doTimer by mutableStateOf(true)
         private set
 
-    var seconds by mutableStateOf(0)
+    var seconds by mutableIntStateOf(0)
         private set
 
     var showExitDialog by mutableStateOf(false)
@@ -146,7 +147,8 @@ class SudokuViewModel @Inject constructor(
                     sudokuBoard = SudokuBoardData(roomData?.opponentBoard!!)
                 }
 
-                if (roomData?.winnerPath != null) {
+                if (roomData?.winnerPath != null && !showGameEndDialog) {
+                    userHasWon = (roomData?.winnerPath == userId)
                     finalizeGame()
                 }
             }
@@ -515,13 +517,14 @@ class SudokuViewModel @Inject constructor(
                     number
                 ) as MutableList<MutableList<SudokuTileData>>
 
+            val isWin = checkForWin(newBoard)
+
+            if (isWin) {
+                userHasWon = true
+            }
+
             if (roomData != null) {
-                val userHadWon = roomData?.winnerPath != null
-                val winner = when {
-                    userHasWon && !userHadWon -> userId
-                    !userHasWon && userHadWon -> roomData?.winnerPath
-                    else -> null
-                }
+                val winner = if (isWin) userId else roomData?.winnerPath
 
                 if (roomData?.ownerPath == userId) {
                     roomData = roomData?.copy(
@@ -546,8 +549,7 @@ class SudokuViewModel @Inject constructor(
                 }
             }
 
-            if (checkForWin(newBoard)) {
-                userHasWon = true
+            if (isWin) {
                 finalizeGame()
             }
         }

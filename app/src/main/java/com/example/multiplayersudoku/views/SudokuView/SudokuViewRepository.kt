@@ -93,20 +93,26 @@ class SudokuViewRepository @Inject constructor(
     suspend fun setOpponentBoard(roomData: RoomData) {
         val roomRef = FirebaseDatabase.getInstance().getReference("rooms/${roomData.roomCode}")
 
-        val updates = mapOf(
+        val updates = mutableMapOf<String, Any?>(
             "flatOpponentBoard" to roomData.flatOpponentBoard,
             "opponentBoardPercentage" to roomData.opponentBoardPercentage
         )
+        if (roomData.winnerPath != null) {
+            updates["winnerPath"] = roomData.winnerPath
+        }
         roomRef.updateChildren(updates).await()
     }
 
     suspend fun setOwnerBoard(roomData: RoomData) {
         val roomRef = FirebaseDatabase.getInstance().getReference("rooms/${roomData.roomCode}")
 
-        val updates = mapOf(
+        val updates = mutableMapOf<String, Any?>(
             "flatOwnerBoard" to roomData.flatOwnerBoard,
             "ownerBoardPercentage" to roomData.ownerBoardPercentage
         )
+        if (roomData.winnerPath != null) {
+            updates["winnerPath"] = roomData.winnerPath
+        }
         roomRef.updateChildren(updates).await()
     }
 }

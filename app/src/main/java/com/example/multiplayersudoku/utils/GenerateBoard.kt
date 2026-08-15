@@ -91,9 +91,9 @@ suspend fun generateBoard(difficulty: Difficulty = Difficulty.EASY): List<List<S
 
         // Decide how many tiles to remove
         val positionsToRemove = when (difficulty) {
-            Difficulty.EASY -> (20..27).random()
-            Difficulty.MEDIUM -> (28..34).random()
-            Difficulty.HARD -> (35..45).random()
+            Difficulty.EASY -> (36..45).random()
+            Difficulty.MEDIUM -> (46..49).random()
+            Difficulty.HARD -> (50..59).random()
         }
 
         // Remove the required positions

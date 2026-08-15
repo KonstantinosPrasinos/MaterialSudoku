@@ -1,6 +1,9 @@
 package com.example.multiplayersudoku.views.mainView
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +23,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Button
@@ -54,18 +60,20 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.multiplayersudoku.R
 import com.example.multiplayersudoku.classes.GameSettings
+import com.example.multiplayersudoku.classes.StatisticsUiState
 import com.example.multiplayersudoku.components.GameSettingsBottomSheet
 import com.example.multiplayersudoku.components.SignInModal
 import com.example.multiplayersudoku.components.UserIcon
 import com.example.multiplayersudoku.ui.theme.FredokaFamily
 import com.example.multiplayersudoku.ui.theme.extendedColors
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MainView(
     onNavigateToSudoku: (gameSettings: GameSettings) -> Unit,
@@ -73,9 +81,44 @@ fun MainView(
     onNavigateToProfile: () -> Unit,
     onNavigateToStatistics: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    viewModel: MainViewModel = hiltViewModel()
+) {
+    val user by viewModel.currentUser.collectAsState()
+    val statisticsUiState by viewModel.statisticsUiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.init(onNavigateToJoinRoom)
+    }
+
+    MainViewContent(
+        user = user,
+        statisticsUiState = statisticsUiState,
+        showLoginModal = viewModel.showLoginModal,
+        onNavigateToSudoku = onNavigateToSudoku,
+        onNavigateToJoinRoom = viewModel::navigateToJoinRoom,
+        onNavigateToProfile = onNavigateToProfile,
+        onNavigateToStatistics = onNavigateToStatistics,
+        onCloseLoginModal = viewModel::closeLoginModal,
+        sharedTransitionScope = sharedTransitionScope,
+        animatedVisibilityScope = animatedVisibilityScope
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun MainViewContent(
+    user: FirebaseUser?,
+    statisticsUiState: StatisticsUiState,
+    showLoginModal: Boolean,
+    onNavigateToSudoku: (gameSettings: GameSettings) -> Unit,
+    onNavigateToJoinRoom: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onNavigateToStatistics: () -> Unit,
+    onCloseLoginModal: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope
 ) {
-    val viewModel: MainViewModel = hiltViewModel()
     val layoutDirection = LocalLayoutDirection.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -91,9 +134,6 @@ fun MainView(
 
     val hintsOptions = (1..GameSettings.maxHints).map { it.toString() }
     var selectedHintsOption by remember { mutableStateOf(hintsOptions[0]) }
-
-    val user by viewModel.currentUser.collectAsState()
-    val statisticsUiState by viewModel.statisticsUiState.collectAsState()
 
     val completionPercentage = remember(statisticsUiState) {
         if (statisticsUiState.totalGames > 0) {
@@ -132,13 +172,9 @@ fun MainView(
     fun closeLoginBottomSheet() {
         scope.launch { sheetState.hide() }.invokeOnCompletion {
             if (!sheetState.isVisible) {
-                viewModel.closeLoginModal()
+                onCloseLoginModal()
             }
         }
-    }
-
-    LaunchedEffect(Unit) {
-        viewModel.init(onNavigateToJoinRoom)
     }
 
     with(sharedTransitionScope) {
@@ -151,7 +187,7 @@ fun MainView(
                     ),
                     title = {
                         Text(
-                            "Material sudoku",
+                            "Logic Arena",
                             style = TextStyle(
                                 fontFamily = FredokaFamily,
                                 fontWeight = FontWeight.Bold,
@@ -172,7 +208,7 @@ fun MainView(
                                 modifier = Modifier.padding(8.dp)
                             ) {
                                 UserIcon(
-                                    photoUrl = if (user != null) user?.photoUrl.toString() else null,
+                                    photoUrl = if (user != null) user.photoUrl.toString() else null,
                                     size = 36.dp,
                                     onClick = { onNavigateToProfile() },
                                     modifier = Modifier
@@ -214,7 +250,7 @@ fun MainView(
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                         )
                         Text(
-                            text = if (user != null) user?.displayName ?: "Player" else "Player",
+                            text = if (user != null) user.displayName ?: "Player" else "Player",
                             style = TextStyle(
                                 fontFamily = FredokaFamily,
                                 fontWeight = FontWeight.Bold,
@@ -278,39 +314,47 @@ fun MainView(
                     }
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    tonalElevation = 3.dp
+                Column(
+                    modifier = Modifier.width(IntrinsicSize.Max),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    OutlinedButton(
+                        onClick = { showPlaySoloBottomSheet = true },
+                        shapes = ButtonDefaults.shapes(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = ButtonDefaults.MediumContainerHeight),
+                        contentPadding = ButtonDefaults.MediumContentPadding
                     ) {
-                        OutlinedButton(
-                            onClick = { showPlaySoloBottomSheet = true },
-                            shapes = ButtonDefaults.shapes(),
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = ButtonDefaults.MediumContainerHeight),
-                            contentPadding = ButtonDefaults.MediumContentPadding
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Solo icon"
+                            )
                             Text(
                                 "Play Solo",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        Button(
-                            onClick = viewModel::navigateToJoinRoom,
-                            shapes = ButtonDefaults.shapes(),
-                            modifier = Modifier
-                                .weight(1.5f)
-                                .heightIn(min = ButtonDefaults.MediumContainerHeight)
-                                .padding(bottom = innerPadding.calculateBottomPadding()),
-                            contentPadding = ButtonDefaults.MediumContentPadding
+                    }
+                    Button(
+                        onClick = onNavigateToJoinRoom,
+                        shapes = ButtonDefaults.shapes(),
+                        modifier = Modifier
+                            .heightIn(min = ButtonDefaults.MediumContainerHeight)
+                            .padding(bottom = innerPadding.calculateBottomPadding()),
+                        contentPadding = ButtonDefaults.MediumContentPadding
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            Icon(
+                                imageVector = Icons.Default.Group,
+                                contentDescription = "Versus icon"
+                            )
                             Text(
                                 "Play versus",
                                 style = MaterialTheme.typography.titleMedium,
@@ -319,6 +363,7 @@ fun MainView(
                         }
                     }
                 }
+                Spacer(modifier = Modifier.weight(0.5f))
                 if (showPlaySoloBottomSheet) {
                     GameSettingsBottomSheet(
                         sheetState = sheetState,
@@ -334,7 +379,7 @@ fun MainView(
                     )
                 }
 
-                if (viewModel.showLoginModal) {
+                if (showLoginModal) {
                     SignInModal(onDismissRequest = ::closeLoginBottomSheet, loginSheetState, snackbarHostState)
                 }
             }
@@ -407,6 +452,38 @@ fun StreakSurface(
                     text = value,
                     style = MaterialTheme.typography.titleMediumEmphasized
                         .copy(color = onSurfaceColor)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Preview(showBackground = true)
+@Composable
+fun MainViewPreview() {
+    MaterialTheme {
+        SharedTransitionLayout {
+            AnimatedVisibility(visible = true) {
+                MainViewContent(
+                    user = null,
+                    statisticsUiState = StatisticsUiState(
+                        averageDuration = 120,
+                        bestTime = 95,
+                        totalGames = 10,
+                        completedGames = 8,
+                        totalDuration = 1200,
+                        winStreak = 3,
+                        isLoading = false
+                    ),
+                    showLoginModal = false,
+                    onNavigateToSudoku = {},
+                    onNavigateToJoinRoom = {},
+                    onNavigateToProfile = {},
+                    onNavigateToStatistics = {},
+                    onCloseLoginModal = {},
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedVisibilityScope = this@AnimatedVisibility
                 )
             }
         }
