@@ -245,19 +245,21 @@ fun MainViewContent(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = "Welcome back,",
+                            text = if (user == null) "Welcome back" else "Welcome back,",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                         )
-                        Text(
-                            text = if (user != null) user.displayName ?: "Player" else "Player",
-                            style = TextStyle(
-                                fontFamily = FredokaFamily,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = MaterialTheme.typography.headlineMedium.fontSize
-                            ),
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        if (user != null) {
+                            Text(
+                                text = user.displayName!!,
+                                style = TextStyle(
+                                    fontFamily = FredokaFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = MaterialTheme.typography.headlineMedium.fontSize
+                                ),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                     Column(
                         horizontalAlignment = Alignment.End,
