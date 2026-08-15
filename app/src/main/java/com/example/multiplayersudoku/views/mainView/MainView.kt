@@ -5,6 +5,11 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,10 +26,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Timer
@@ -33,6 +44,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -66,11 +79,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.multiplayersudoku.R
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.classes.StatisticsUiState
+import com.example.multiplayersudoku.classes.SupportedGameModes
 import com.example.multiplayersudoku.components.GameSettingsBottomSheet
 import com.example.multiplayersudoku.components.SignInModal
 import com.example.multiplayersudoku.components.UserIcon
 import com.example.multiplayersudoku.ui.theme.FredokaFamily
 import com.example.multiplayersudoku.ui.theme.extendedColors
+import com.example.multiplayersudoku.utils.capitalizeFirstLetter
+import com.example.multiplayersudoku.views.statisticsView.StatisticsDestination
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.launch
 
@@ -101,7 +117,9 @@ fun MainView(
         onNavigateToStatistics = onNavigateToStatistics,
         onCloseLoginModal = viewModel::closeLoginModal,
         sharedTransitionScope = sharedTransitionScope,
-        animatedVisibilityScope = animatedVisibilityScope
+        animatedVisibilityScope = animatedVisibilityScope,
+        selectedGameMode = viewModel.selectedGameMode,
+        setGameMode = viewModel::setGameMode
     )
 }
 
@@ -117,7 +135,9 @@ fun MainViewContent(
     onNavigateToStatistics: () -> Unit,
     onCloseLoginModal: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
-    animatedVisibilityScope: AnimatedVisibilityScope
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    selectedGameMode: SupportedGameModes,
+    setGameMode: (gameMode: SupportedGameModes) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -222,6 +242,31 @@ fun MainViewContent(
                     },
                 )
             },
+            floatingActionButtonPosition = FabPosition.Center,
+            floatingActionButton = {
+                HorizontalFloatingToolbar(
+                    expanded = true,
+                    expandedShadowElevation = 2.dp
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        ToolbarTabItem(
+                            isSelected = selectedGameMode == SupportedGameModes.SUDOKU,
+                            icon = Icons.Default.Numbers,
+                            label = "Sudoku",
+                            onClick = {setGameMode(SupportedGameModes.SUDOKU)}
+                        )
+                        ToolbarTabItem(
+                            isSelected = selectedGameMode == SupportedGameModes.WORDUEL,
+                            icon = Icons.AutoMirrored.Filled.MenuBook,
+                            label = "Worduel",
+                            onClick = {setGameMode(SupportedGameModes.WORDUEL)}
+                        )
+                    }
+                }
+
+            }
         ) { innerPadding ->
             Column(
                 modifier = Modifier
@@ -365,6 +410,7 @@ fun MainViewContent(
                         }
                     }
                 }
+
                 Spacer(modifier = Modifier.weight(0.5f))
                 if (showPlaySoloBottomSheet) {
                     GameSettingsBottomSheet(
@@ -460,6 +506,53 @@ fun StreakSurface(
     }
 }
 
+@Composable
+fun ToolbarTabItem(
+    isSelected: Boolean,
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+        label = "TabBackground"
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+        label = "TabContent"
+    )
+
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(100.dp),
+        color = backgroundColor,
+        contentColor = contentColor
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label
+            )
+            AnimatedVisibility(
+                visible = isSelected,
+                enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
+                exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut()
+            ) {
+                Text(
+                    text = label,
+                    modifier = Modifier.padding(start = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Preview(showBackground = true)
 @Composable
@@ -485,7 +578,9 @@ fun MainViewPreview() {
                     onNavigateToStatistics = {},
                     onCloseLoginModal = {},
                     sharedTransitionScope = this@SharedTransitionLayout,
-                    animatedVisibilityScope = this@AnimatedVisibility
+                    animatedVisibilityScope = this@AnimatedVisibility,
+                    selectedGameMode = SupportedGameModes.SUDOKU,
+                    setGameMode = {}
                 )
             }
         }

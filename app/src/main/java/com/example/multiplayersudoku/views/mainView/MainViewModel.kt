@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.multiplayersudoku.classes.StatisticsUiState
+import com.example.multiplayersudoku.classes.SupportedGameModes
 import com.example.multiplayersudoku.datastore.FirebaseAuthRepository
 import com.example.multiplayersudoku.datastore.gameResult.StatisticsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,12 +29,19 @@ class MainViewModel @Inject constructor(
     var showLoginModal by mutableStateOf(false)
         private set
 
+    var selectedGameMode by mutableStateOf(SupportedGameModes.SUDOKU)
+        private set
+
     // Hot flow: UI always gets the latest user instantly
     val currentUser = repository.currentUser.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = null
     )
+
+    fun setGameMode(gameMode: SupportedGameModes) {
+        selectedGameMode = gameMode
+    }
 
     val statisticsUiState: StateFlow<StatisticsUiState> = statisticsRepository
         .getStatisticsSummary(null)
