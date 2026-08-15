@@ -380,12 +380,6 @@ class SudokuViewModel @Inject constructor(
     }
 
     fun undoLastAction() {
-        val solvedBoard = attemptSolve(sudokuBoard.board)
-
-        sudokuBoard = sudokuBoard.copy(
-            board = solvedBoard.boardData.map { it }
-        )
-
         if (undoableActions.isEmpty()) return
 
         val lastAction = undoableActions.last()
