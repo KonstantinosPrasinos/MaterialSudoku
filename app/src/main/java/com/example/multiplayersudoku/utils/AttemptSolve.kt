@@ -241,29 +241,22 @@ fun attemptSolve(
     var newBoard = markNotes(boardData)
     var totalChangesMade: Int
 
-    if (difficulty == Difficulty.EASY) {
-        // Try to solve it with the techniques
-        do {
-            totalChangesMade = 0
+    // Try to solve it with the human logic techniques
+    do {
+        totalChangesMade = 0
 
-            val nakedChangesMade = nakedSingle(newBoard)
-            totalChangesMade += nakedChangesMade.nChanges
-            newBoard = nakedChangesMade.boardData
+        val nakedChangesMade = nakedSingle(newBoard)
+        totalChangesMade += nakedChangesMade.nChanges
+        newBoard = nakedChangesMade.boardData
 
+        val hiddenChangesMade = hiddenSingle(newBoard)
+        totalChangesMade += hiddenChangesMade.nChanges
+        newBoard = hiddenChangesMade.boardData
 
-            val hiddenChangesMade = hiddenSingle(newBoard)
-            totalChangesMade += hiddenChangesMade.nChanges
-            newBoard = hiddenChangesMade.boardData
+        val scanningChangesMade = scanning(newBoard)
+        totalChangesMade += scanningChangesMade.nChanges
+        newBoard = scanningChangesMade.boardData
+    } while (totalChangesMade > 0)
 
-            val scanningChangesMade = scanning(newBoard)
-            totalChangesMade += scanningChangesMade.nChanges
-            newBoard = scanningChangesMade.boardData
-        } while (totalChangesMade > 0)
-
-        print("Can be solved: ${checkBoardFilled(newBoard)}")
-
-        return SolvedBoard(checkBoardFilled(newBoard), newBoard)
-    }
-
-    return SolvedBoard(false, newBoard)
+    return SolvedBoard(checkBoardFilled(newBoard), newBoard)
 }

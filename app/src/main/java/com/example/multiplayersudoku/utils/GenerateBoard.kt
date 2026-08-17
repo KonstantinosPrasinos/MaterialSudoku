@@ -23,6 +23,50 @@ fun checkBoardValidity(boardData: List<List<SudokuTileData>>, row: Int, col: Int
     return true
 }
 
+fun countSolutions(boardData: List<List<SudokuTileData>>, row: Int = 0, col: Int = 0, maxSolutions: Int = 2): Int {
+    // Max col is 8 so 9 should be on the next row
+    if (col == 9) {
+        return countSolutions(boardData, row + 1, 0, maxSolutions)
+    }
+
+    // Started to check over max rows so the puzzle is solved
+    if (row == 9) {
+        return 1
+    }
+
+    val currentTile = boardData[row][col]
+
+    if (currentTile.value != null) {
+        return countSolutions(boardData, row, col + 1, maxSolutions)
+    }
+
+    var totalSolutions = 0
+
+    for (num in 1..9) {
+        val isValid = !checkRow(boardData, currentTile, num) &&
+                !checkCol(boardData, currentTile, num) &&
+                !checkGrid(boardData, currentTile, num)
+
+        if (isValid) {
+            currentTile.value = num
+
+            totalSolutions += countSolutions(boardData, row, col + 1, maxSolutions)
+
+            currentTile.value = null
+
+            if (totalSolutions >= maxSolutions) {
+                return totalSolutions
+            }
+        }
+    }
+
+    return totalSolutions
+}
+
+fun hasUniqueSolution(boardData: List<List<SudokuTileData>>): Boolean {
+    return countSolutions(boardData, maxSolutions = 2) == 1
+}
+
 fun generateTile(boardData: List<List<SudokuTileData>>, row: Int, col: Int): Boolean {
     // 1. Base Case: If we've moved past the last column, go to the next row.
     if (col == 9) {
@@ -74,45 +118,54 @@ fun generateFilledBoard(): List<List<SudokuTileData>> {
     return board
 }
 
-suspend fun generateBoard(difficulty: Difficulty = Difficulty.EASY): List<List<SudokuTileData>> {
-    // Generate a filled board
-    val board = generateFilledBoard()
-    var notSolved: Boolean
-    var newBoard: List<List<SudokuTileData>>
+suspend fun generateBoard(difficulty: Difficulty = Difficulty.EASY): com.example.multiplayersudoku.classes.SudokuBoardData {
+    // Generate a filled board and capture the ground-truth solution matrix
+    val filledBoard = generateFilledBoard()
+    val solutionMatrix = filledBoard.map { row ->
+        row.map { tile -> tile.value!! }
+    }
 
-    do {
-        yield()
-        // Create a copy of the board
-        newBoard = board.map { row ->
-            row.map { tile ->
-                tile.copy() // This creates a new SudokuTileData instance
-            }
+    yield()
+
+    // Create a copy for clue removal
+    val puzzleBoard = filledBoard.map { row ->
+        row.map { tile -> tile.copy() }
+    }
+
+    // Decide how many tiles to remove
+    val positionsToRemove = when (difficulty) {
+        Difficulty.EASY -> (36..45).random()
+        Difficulty.MEDIUM -> (46..49).random()
+        Difficulty.HARD -> (50..59).random()
+    }
+
+    // Remove the required positions
+    val shuffledPositions = (0 until 81).shuffled()
+    var emptyCount = 0
+
+    for (pos in shuffledPositions) {
+        if (emptyCount >= positionsToRemove) break
+
+        val row = pos / 9
+        val col = pos % 9
+
+        // Remove the value temporarily and check if the board still has one unique solution
+        val tempValue = puzzleBoard[row][col].value
+        puzzleBoard[row][col].value = null
+
+        // For EASY puzzles, verify that the board remains solvable using basic human techniques
+        val isHumanSolvable = attemptSolve(puzzleBoard, difficulty).isSolved
+
+        if (hasUniqueSolution(puzzleBoard) && isHumanSolvable) {
+            puzzleBoard[row][col].isEditable = true
+            emptyCount++
+        } else {
+            puzzleBoard[row][col].value = tempValue
         }
+    }
 
-        // Decide how many tiles to remove
-        val positionsToRemove = when (difficulty) {
-            Difficulty.EASY -> (36..45).random()
-            Difficulty.MEDIUM -> (46..49).random()
-            Difficulty.HARD -> (50..59).random()
-        }
-
-        // Remove the required positions
-        val shuffledPositions = (0 until 81).shuffled()
-
-        for (i in 0 until positionsToRemove) {
-            val row = shuffledPositions[i] / 9
-            val col = shuffledPositions[i] % 9
-
-            newBoard[row][col].value = null
-            newBoard[row][col].isEditable = true
-        }
-
-
-        // Attempt to solve the board
-        val solvedBoard = attemptSolve(newBoard)
-
-        notSolved = !solvedBoard.isSolved
-    } while (notSolved)
-
-    return newBoard
+    return com.example.multiplayersudoku.classes.SudokuBoardData(
+        board = puzzleBoard,
+        solution = solutionMatrix
+    )
 }

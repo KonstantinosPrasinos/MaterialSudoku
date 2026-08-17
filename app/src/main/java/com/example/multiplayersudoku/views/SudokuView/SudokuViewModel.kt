@@ -106,8 +106,7 @@ class SudokuViewModel @Inject constructor(
         val newSudokuBoard = withContext(Dispatchers.Default) {
             SudokuBoardData.generateRandom(gameSettings.difficulty)
         }
-        val canonBoard =
-            newSudokuBoard.board.map { it.map { tile -> if (tile.value != null) tile.value else -1 } as List<Int> }
+        val canonBoard = newSudokuBoard.solution
         val updatedRoomData = roomData?.copy(
             ownerBoard = newSudokuBoard.board,
             opponentBoard = newSudokuBoard.board,
@@ -131,7 +130,10 @@ class SudokuViewModel @Inject constructor(
     private fun initializeMultiplayerAsOpponent() {
         if (roomData?.opponentBoard == null) return
         viewModelScope.launch(Dispatchers.Main) {
-            sudokuBoard = SudokuBoardData(roomData?.opponentBoard!!)
+            sudokuBoard = SudokuBoardData(
+                board = roomData?.opponentBoard!!,
+                solution = roomData?.canonBoard ?: emptyList()
+            )
         }
 
         listenToRoomChanges()
@@ -147,7 +149,10 @@ class SudokuViewModel @Inject constructor(
                     initializePlayers()
                 }
                 if (opponent?.id == userId && sudokuBoard.isEmpty()) {
-                    sudokuBoard = SudokuBoardData(roomData?.opponentBoard!!)
+                    sudokuBoard = SudokuBoardData(
+                        board = roomData?.opponentBoard!!,
+                        solution = roomData?.canonBoard ?: emptyList()
+                    )
                 }
 
                 if (roomData?.winnerPath != null && !showGameEndDialog) {
@@ -231,22 +236,7 @@ class SudokuViewModel @Inject constructor(
     }
 
     private fun checkForMistakes(number: Int, row: Int, col: Int): Boolean {
-        val newBoard = sudokuBoard.copyBoard().map { it.toMutableList() }.toMutableList()
-        val tileToUpdate = newBoard[row][col]
-
-        val isDuplicate =
-            com.example.multiplayersudoku.utils.checkRow(newBoard, tileToUpdate, number) ||
-                    com.example.multiplayersudoku.utils.checkCol(newBoard, tileToUpdate, number) ||
-                    com.example.multiplayersudoku.utils.checkGrid(newBoard, tileToUpdate, number)
-
-        if (isDuplicate) return true
-
-        // Place the value in the field and test
-        newBoard[row][col] = tileToUpdate.copy(value = number)
-
-        val solvedBoard = attemptSolve(newBoard)
-
-        return !solvedBoard.isSolved
+        return sudokuBoard.isMistake(row, col, number)
     }
 
     private fun checkForWin(board: List<List<SudokuTileData>>): Boolean {
@@ -571,11 +561,20 @@ class SudokuViewModel @Inject constructor(
     }
 
     fun solveBoard() {
-        val solvedBoardResult = attemptSolve(sudokuBoard.board)
+        if (sudokuBoard.solution.isNotEmpty()) {
+            val solvedTiles = sudokuBoard.board.mapIndexed { r, row ->
+                row.mapIndexed { c, tile ->
+                    tile.copy(value = sudokuBoard.solution[r][c], isMistake = false)
+                }
+            }
+            sudokuBoard = sudokuBoard.copy(board = solvedTiles)
+        } else {
+            val solvedBoardResult = attemptSolve(sudokuBoard.board)
 
-        sudokuBoard = sudokuBoard.copy(
-            board = solvedBoardResult.boardData
-        )
+            sudokuBoard = sudokuBoard.copy(
+                board = solvedBoardResult.boardData
+            )
+        }
 
         userHasWon = true
 
@@ -610,6 +609,13 @@ class SudokuViewModel @Inject constructor(
 
         val newBoard = sudokuBoard.copyBoard().map { it.toMutableList() }.toMutableList()
         tileToUpdate = newBoard[row][col]
+
+        if (sudokuBoard.solution.isNotEmpty() && row in sudokuBoard.solution.indices && col in sudokuBoard.solution[row].indices) {
+            val correctValue = sudokuBoard.solution[row][col]
+            newBoard[row][col] = tileToUpdate.copy(value = correctValue, isMistake = false)
+            sudokuBoard = sudokuBoard.copy(board = newBoard)
+            return
+        }
 
         for (i in 1..9) {
             val isMistake = checkForMistakes(i, row, col)
