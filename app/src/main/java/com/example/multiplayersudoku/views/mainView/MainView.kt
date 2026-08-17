@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -82,6 +83,7 @@ import com.example.multiplayersudoku.classes.StatisticsUiState
 import com.example.multiplayersudoku.classes.SupportedGameModes
 import com.example.multiplayersudoku.components.GameSettingsBottomSheet
 import com.example.multiplayersudoku.components.SignInModal
+import com.example.multiplayersudoku.components.ToggleableLottieAnimation
 import com.example.multiplayersudoku.components.UserIcon
 import com.example.multiplayersudoku.ui.theme.FredokaFamily
 import com.example.multiplayersudoku.ui.theme.extendedColors
@@ -242,38 +244,14 @@ fun MainViewContent(
                     },
                 )
             },
-            floatingActionButtonPosition = FabPosition.Center,
-            floatingActionButton = {
-                HorizontalFloatingToolbar(
-                    expanded = true,
-                    expandedShadowElevation = 2.dp
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        ToolbarTabItem(
-                            isSelected = selectedGameMode == SupportedGameModes.SUDOKU,
-                            icon = Icons.Default.Numbers,
-                            label = "Sudoku",
-                            onClick = {setGameMode(SupportedGameModes.SUDOKU)}
-                        )
-                        ToolbarTabItem(
-                            isSelected = selectedGameMode == SupportedGameModes.WORDUEL,
-                            icon = Icons.AutoMirrored.Filled.MenuBook,
-                            label = "Worduel",
-                            onClick = {setGameMode(SupportedGameModes.WORDUEL)}
-                        )
-                    }
-                }
-
-            }
         ) { innerPadding ->
             Column(
                 modifier = Modifier
                     .padding(
                         top = innerPadding.calculateTopPadding(),
                         start = innerPadding.calculateStartPadding(layoutDirection),
-                        end = innerPadding.calculateEndPadding(layoutDirection)
+                        end = innerPadding.calculateEndPadding(layoutDirection),
+                        bottom = innerPadding.calculateBottomPadding(),
                     )
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -360,7 +338,10 @@ fun MainViewContent(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.weight(1f))
+                ToggleableLottieAnimation(
+                    isActive = selectedGameMode == SupportedGameModes.SUDOKU,
+                    modifier = Modifier.weight(1f),
+                )
                 Column(
                     modifier = Modifier.width(IntrinsicSize.Max),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -410,8 +391,29 @@ fun MainViewContent(
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(20.dp))
+                HorizontalFloatingToolbar(
+                    expanded = true,
+                    expandedShadowElevation = 2.dp
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        ToolbarTabItem(
+                            isSelected = selectedGameMode == SupportedGameModes.SUDOKU,
+                            icon = Icons.Default.Numbers,
+                            label = "Sudoku",
+                            onClick = {setGameMode(SupportedGameModes.SUDOKU)}
+                        )
+                        ToolbarTabItem(
+                            isSelected = selectedGameMode == SupportedGameModes.WORDUEL,
+                            icon = Icons.AutoMirrored.Filled.MenuBook,
+                            label = "Worduel",
+                            onClick = {setGameMode(SupportedGameModes.WORDUEL)}
+                        )
+                    }
+                }
 
-                Spacer(modifier = Modifier.weight(0.5f))
                 if (showPlaySoloBottomSheet) {
                     GameSettingsBottomSheet(
                         sheetState = sheetState,
