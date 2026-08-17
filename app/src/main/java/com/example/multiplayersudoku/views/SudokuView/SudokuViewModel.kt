@@ -227,7 +227,7 @@ class SudokuViewModel @Inject constructor(
     }
 
     private fun checkForMistakes(number: Int, row: Int, col: Int): Boolean {
-        val newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
+        val newBoard = sudokuBoard.copyBoard().map { it.toMutableList() }.toMutableList()
         val tileToUpdate = newBoard[row][col]
 
         val isDuplicate =
@@ -463,7 +463,7 @@ class SudokuViewModel @Inject constructor(
         if (isPaused || row == null || col == null) return
 
         // Create a deep copy of the board to modify it
-        var newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
+        var newBoard = sudokuBoard.copyBoard().map { it.toMutableList() }.toMutableList()
         val tileToUpdate = newBoard[row][col]
 
         // Check if the tile is editable before changing it
@@ -598,7 +598,7 @@ class SudokuViewModel @Inject constructor(
 
         hints += 1
 
-        val newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
+        val newBoard = sudokuBoard.copyBoard().map { it.toMutableList() }.toMutableList()
         tileToUpdate = newBoard[row][col]
 
         for (i in 1..9) {
@@ -627,7 +627,7 @@ class SudokuViewModel @Inject constructor(
         if (isPaused || row == null || col == null) return
 
         // Create a deep copy of the board to modify it
-        val newBoard = sudokuBoard.board.toMutableList().map { it.toMutableList() }
+        val newBoard = sudokuBoard.copyBoard().map { it.toMutableList() }.toMutableList()
         val tileToUpdate = newBoard[row][col]
 
         if (!tileToUpdate.isEditable) return

@@ -41,6 +41,14 @@ data class SudokuBoardData(
         }
     }
 
+    fun copyBoard(): List<List<SudokuTileData>> {
+        return board.map { row ->
+            row.map { tile ->
+                tile.copy(notes = tile.notes.toMutableList())
+            }
+        }
+    }
+
     fun isEmpty(): Boolean {
         for (row in board) {
             for (tile in row) {

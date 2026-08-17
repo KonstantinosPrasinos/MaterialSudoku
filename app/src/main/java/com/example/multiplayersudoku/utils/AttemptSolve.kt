@@ -195,7 +195,11 @@ fun scanning(boardData: List<List<SudokuTileData>>): ChangesMade {
 
 // Helper function that marks all tile's notes
 fun markNotes(boardData: List<List<SudokuTileData>>): List<List<SudokuTileData>> {
-    val newBoard = boardData.map { it.toMutableList() }.toMutableList()
+    val newBoard = boardData.map { row ->
+        row.map { tile ->
+            tile.copy(notes = tile.notes.toMutableList())
+        }.toMutableList()
+    }.toMutableList()
 
     for (row in newBoard) {
         for (tile in row) {
