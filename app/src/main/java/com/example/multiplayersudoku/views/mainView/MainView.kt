@@ -245,13 +245,14 @@ fun MainViewContent(
                 )
             },
         ) { innerPadding ->
+            val bottomPadding = innerPadding.calculateBottomPadding()
             Column(
                 modifier = Modifier
                     .padding(
                         top = innerPadding.calculateTopPadding(),
                         start = innerPadding.calculateStartPadding(layoutDirection),
                         end = innerPadding.calculateEndPadding(layoutDirection),
-                        bottom = innerPadding.calculateBottomPadding(),
+                        bottom = if (bottomPadding == 0.dp) 10.dp else bottomPadding,
                     )
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,

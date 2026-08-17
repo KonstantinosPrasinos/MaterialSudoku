@@ -28,6 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.multiplayersudoku.classes.SudokuTileData
@@ -37,6 +39,7 @@ import com.example.multiplayersudoku.utils.rightBorder
 import com.example.multiplayersudoku.utils.topBorder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun Fixed3x3Grid(notedNumbers: MutableList<Int>, textColor: Color) {
@@ -123,6 +126,7 @@ fun SudokuTile(
     selectedNumber: Int?,
     isPaused: Boolean = false,
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
     val isSelected =
         (selectedTileIndices[0] == tileData.rowIndex && selectedTileIndices[1] == tileData.colIndex)
     val groupSelected =
@@ -151,6 +155,8 @@ fun SudokuTile(
 
     LaunchedEffect(tileData.isCompleted) {
         if (tileData.isCompleted) {
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+
             launch {
                 textColor.animateTo(
                     targetValue = completedTextColor,
@@ -159,7 +165,7 @@ fun SudokuTile(
             }
 
 
-            delay(700)
+            delay(700.milliseconds)
 
             launch {
                 textColor.animateTo(

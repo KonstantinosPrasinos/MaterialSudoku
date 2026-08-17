@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
@@ -121,11 +122,12 @@ fun EndDialogText(difficulty: Difficulty, seconds: Int, userHasWon: Boolean) {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?) {
+    val hapticFeedback = LocalHapticFeedback.current
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val viewModel: SudokuViewModel = hiltViewModel()
 
     LaunchedEffect(Unit) {
-        viewModel.init(gameSettings, roomCode)
+        viewModel.init(gameSettings, hapticFeedback, roomCode)
     }
 
     BackHandler(enabled = !viewModel.showExitDialog) {

@@ -7,6 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.multiplayersudoku.classes.GameSettings
@@ -34,6 +36,7 @@ class SudokuViewModel @Inject constructor(
     private val repository: SudokuViewRepository
 ) : ViewModel() {
     private lateinit var gameSettings: GameSettings
+    private lateinit var hapticFeedback: HapticFeedback
 
     var selectedTileIndices by mutableStateOf<List<Int?>>(listOf(null, null))
         private set
@@ -172,11 +175,12 @@ class SudokuViewModel @Inject constructor(
         }
     }
 
-    fun init(settings: GameSettings, roomCode: String?) {
+    fun init(settings: GameSettings, hapticFeedback: HapticFeedback, roomCode: String?) {
         if (isInitialized) return
         isInitialized = true
 
         gameSettings = settings
+        this.hapticFeedback = hapticFeedback
         user = Firebase.auth.currentUser
 
         viewModelScope.launch { // The parent coroutine
@@ -492,11 +496,15 @@ class SudokuViewModel @Inject constructor(
             val isMistake = checkForMistakes(number, row, col)
 
             if (isMistake) {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.Reject)
+
                 mistakes += 1
                 if (mistakes >= gameSettings.mistakes) {
                     userHasWon = false
                     finalizeGame()
                 }
+            } else {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
             }
 
             newBoard[row][col] =
@@ -576,6 +584,8 @@ class SudokuViewModel @Inject constructor(
 
     fun selectTile(row: Int?, col: Int?) {
         if (isPaused) return
+
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
 
         if (row == selectedTileIndices[0] && col == selectedTileIndices[1]) {
             selectedTileIndices = listOf(null, null)
