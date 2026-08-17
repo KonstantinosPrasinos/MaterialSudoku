@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.getValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.AlertDialog
@@ -39,9 +41,46 @@ import com.example.multiplayersudoku.BuildConfig
 import com.example.multiplayersudoku.R
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
+import androidx.compose.ui.layout.ContentScale
 import com.example.multiplayersudoku.ui.theme.extendedColors
 import com.example.multiplayersudoku.utils.formatDifficulty
+import com.example.multiplayersudoku.utils.frostedGlass
 import kotlinx.coroutines.launch
+
+@Composable
+fun LottieComposeAnimation(
+    modifier: Modifier = Modifier,
+    alignment: Alignment = Alignment.BottomCenter,
+    contentScale: ContentScale = ContentScale.FillWidth
+) {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(R.raw.confetti_animation)
+    )
+
+    val progress by animateLottieCompositionAsState(
+        composition = composition
+    )
+
+    LottieAnimation(
+        composition = composition,
+        progress = { progress },
+        alignment = alignment,
+        contentScale = contentScale,
+        modifier = modifier
+    )
+}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -177,106 +216,137 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?
             )
         }
 
-        if (viewModel.showGameEndDialog) {
-            AlertDialog(
-                onDismissRequest = { },
-                title = { Text(if (viewModel.userHasWon) "You won 🎉" else "You lost 😅") },
-                icon = {
-                    if (viewModel.userHasWon) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_chess_queen),
-                            contentDescription = "Crown",
-                            tint = MaterialTheme.extendedColors.win,
-                            modifier = Modifier.size(60.dp)
-                        )
-                    }
-                },
-                text = {
-                    EndDialogText(
-                        gameSettings.difficulty,
-                        viewModel.seconds,
-                        viewModel.userHasWon
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.updateShowGameEndDialogState(false)
-                            onBack()
-                        }
-                    ) {
-                        Text("Continue")
-                    }
-                }
-            )
-        }
+        val gameEndBlurRadius by animateDpAsState(
+            targetValue = if (viewModel.showGameEndDialog) 10.dp else 0.dp,
+            label = "gameEndBlurRadius"
+        )
 
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            topBar = {
-                SudokuTopAppBar(
-                    scrollBehavior = scrollBehavior,
-                    isPaused = viewModel.isPaused,
-                    togglePaused = viewModel::togglePaused,
-                    onBack = { viewModel.setExitDialogVisibility(true) },
-                    difficulty = gameSettings.difficulty,
-                    seconds = viewModel.seconds,
-                    showPauseButton = !viewModel.isMultiplayer
-                )
-            }
-        ) { innerPadding ->
-            Column(
+        Box(modifier = Modifier.fillMaxSize()) {
+            Scaffold(
                 modifier = Modifier
-                    .padding(innerPadding)
-                    .padding(horizontal = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                InfoBar(
-                    hints = viewModel.hints,
-                    mistakes = viewModel.mistakes,
-                    maxHints = gameSettings.hints,
-                    maxMistakes = gameSettings.mistakes,
-                )
-                if (viewModel.isMultiplayer) {
-                    MultiplayerProgressBar(
-                        player1Percentage = viewModel.roomData?.ownerBoardPercentage ?: 0f,
-                        player1PhotoUrl = viewModel.owner?.profilePictureURL,
-                        player2PhotoUrl = viewModel.opponent?.profilePictureURL,
-                        player2Percentage = viewModel.roomData?.opponentBoardPercentage ?: 0f
+                    .fillMaxSize()
+                    .blur(radius = gameEndBlurRadius),
+                topBar = {
+                    SudokuTopAppBar(
+                        scrollBehavior = scrollBehavior,
+                        isPaused = viewModel.isPaused,
+                        togglePaused = viewModel::togglePaused,
+                        onBack = { viewModel.setExitDialogVisibility(true) },
+                        difficulty = gameSettings.difficulty,
+                        seconds = viewModel.seconds,
+                        showPauseButton = !viewModel.isMultiplayer
                     )
                 }
-                SudokuBoard(
-                    boardData = viewModel.sudokuBoard,
-                    selectedTileIndices = viewModel.selectedTileIndices,
-                    selectTile = viewModel::selectTile,
-                    isPaused = viewModel.isPaused,
-                    togglePaused = viewModel::togglePaused
-                )
-                NumberButtons(
-                    onNumberClick = viewModel::setTileValue,
-                    isPaused = viewModel.isPaused
-                )
-                ActionButtons(
-                    isWritingNotes = viewModel.isWritingNotes,
-                    toggleEditing = viewModel::toggleWritingNotes,
-                    eraseTile = viewModel::eraseSelectedTile,
-                    undoLastAction = viewModel::undoLastAction,
-                    canUndo = viewModel.undoableActions.isNotEmpty(),
-                    generateHint = viewModel::generateHint,
-                    canGenerateHint = viewModel.hints < gameSettings.hints
-                )
-                if (BuildConfig.DEBUG) {
-                    FilledTonalIconButton(
-                        onClick = viewModel::solveBoard,
-                        shapes = IconButtonDefaults.shapes(),
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lightbulb,
-                            contentDescription = ""
+            ) { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .padding(horizontal = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    InfoBar(
+                        hints = viewModel.hints,
+                        mistakes = viewModel.mistakes,
+                        maxHints = gameSettings.hints,
+                        maxMistakes = gameSettings.mistakes,
+                    )
+                    if (viewModel.isMultiplayer) {
+                        MultiplayerProgressBar(
+                            player1Percentage = viewModel.roomData?.ownerBoardPercentage ?: 0f,
+                            player1PhotoUrl = viewModel.owner?.profilePictureURL,
+                            player2PhotoUrl = viewModel.opponent?.profilePictureURL,
+                            player2Percentage = viewModel.roomData?.opponentBoardPercentage ?: 0f
                         )
                     }
+                    SudokuBoard(
+                        boardData = viewModel.sudokuBoard,
+                        selectedTileIndices = viewModel.selectedTileIndices,
+                        selectTile = viewModel::selectTile,
+                        isPaused = viewModel.isPaused,
+                        togglePaused = viewModel::togglePaused
+                    )
+                    NumberButtons(
+                        onNumberClick = viewModel::setTileValue,
+                        isPaused = viewModel.isPaused
+                    )
+                    ActionButtons(
+                        isWritingNotes = viewModel.isWritingNotes,
+                        toggleEditing = viewModel::toggleWritingNotes,
+                        eraseTile = viewModel::eraseSelectedTile,
+                        undoLastAction = viewModel::undoLastAction,
+                        canUndo = viewModel.undoableActions.isNotEmpty(),
+                        generateHint = viewModel::generateHint,
+                        canGenerateHint = viewModel.hints < gameSettings.hints
+                    )
+                    if (BuildConfig.DEBUG) {
+                        FilledTonalIconButton(
+                            onClick = viewModel::solveBoard,
+                            shapes = IconButtonDefaults.shapes(),
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lightbulb,
+                                contentDescription = ""
+                            )
+                        }
+                    }
                 }
+            }
+
+            if (viewModel.showGameEndDialog) {
+                Scaffold(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.4f),
+                ) { innerPadding ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .padding(horizontal = 10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Spacer(Modifier.weight(0.5f))
+                        if (viewModel.userHasWon) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_chess_queen),
+                                contentDescription = "Crown",
+                                tint = MaterialTheme.extendedColors.win,
+                                modifier = Modifier.size(60.dp)
+                            )
+                        }
+                        Text(
+                            text = if (viewModel.userHasWon) "You won 🎉" else "You lost 😅",
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+
+                        EndDialogText(
+                            gameSettings.difficulty,
+                            viewModel.seconds,
+                            viewModel.userHasWon
+                        )
+                        Spacer(Modifier.weight(1f))
+                        Button(
+                            onClick = {
+                                viewModel.updateShowGameEndDialogState(false)
+                                onBack()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Continue")
+                        }
+                    }
+
+                }
+            }
+
+            if (viewModel.showGameEndDialog) {
+                LottieComposeAnimation(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                )
             }
         }
     }

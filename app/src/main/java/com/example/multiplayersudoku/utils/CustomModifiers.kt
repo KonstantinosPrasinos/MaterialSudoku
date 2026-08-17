@@ -1,12 +1,17 @@
 package com.example.multiplayersudoku.utils
 
+import android.os.Build
+import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 fun Modifier.bottomBorder(strokeWidth: Dp, color: Color): Modifier = this.drawBehind {
     val strokeWidthPx = strokeWidth.toPx()
@@ -59,3 +64,15 @@ fun Modifier.rightBorder(strokeWidth: Dp, color: Color): Modifier = this.drawBeh
         strokeWidth = strokeWidthPx
     )
 }
+
+fun Modifier.frostedGlass(
+    blurRadius: Dp = 20.dp,
+    backgroundColor: Color = Color.Unspecified
+): Modifier = this.graphicsLayer {
+    val radiusPx = blurRadius.toPx()
+    renderEffect = android.graphics.RenderEffect
+        .createBlurEffect(radiusPx, radiusPx, android.graphics.Shader.TileMode.CLAMP)
+        .asComposeRenderEffect()
+}.then(
+    if (backgroundColor != Color.Unspecified) Modifier.background(backgroundColor) else Modifier
+)
