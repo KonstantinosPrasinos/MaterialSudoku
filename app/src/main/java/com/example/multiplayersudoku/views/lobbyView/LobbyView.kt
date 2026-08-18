@@ -309,7 +309,9 @@ fun LobbyView(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             FilledIconButton(
-                                shapes = IconButtonDefaults.shapes(),
+                                shapes = IconButtonDefaults.shapes(
+                                    shape = CircleShape
+                                ),
                                 onClick = { copyCode() }
                             ) {
                                 Icon(
@@ -318,7 +320,9 @@ fun LobbyView(
                                 )
                             }
                             FilledIconButton(
-                                shapes = IconButtonDefaults.shapes(),
+                                shapes = IconButtonDefaults.shapes(
+                                    shape = CircleShape
+                                ),
                                 onClick = { }
                             ) {
                                 Icon(
@@ -366,7 +370,9 @@ fun LobbyView(
                         }
                         FilledIconButton(
                             onClick = viewModel::toggleGameSettingsBottomSheetVisibility,
-                            shapes = IconButtonDefaults.shapes(),
+                            shapes = IconButtonDefaults.shapes(
+                                shape = CircleShape
+                            ),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
