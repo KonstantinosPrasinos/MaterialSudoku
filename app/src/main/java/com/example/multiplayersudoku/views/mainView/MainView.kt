@@ -1,7 +1,13 @@
 package com.example.multiplayersudoku.views.mainView
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
@@ -69,6 +75,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -87,6 +94,7 @@ import com.example.multiplayersudoku.components.ToggleableLottieAnimation
 import com.example.multiplayersudoku.components.UserIcon
 import com.example.multiplayersudoku.ui.theme.FredokaFamily
 import com.example.multiplayersudoku.ui.theme.extendedColors
+import com.example.multiplayersudoku.utils.MatchNotificationManager
 import com.example.multiplayersudoku.utils.capitalizeFirstLetter
 import com.example.multiplayersudoku.views.statisticsView.StatisticsDestination
 import com.google.firebase.auth.FirebaseUser
@@ -373,8 +381,8 @@ fun MainViewContent(
                         onClick = onNavigateToJoinRoom,
                         shapes = ButtonDefaults.shapes(),
                         modifier = Modifier
-                            .heightIn(min = ButtonDefaults.MediumContainerHeight)
-                            .padding(bottom = innerPadding.calculateBottomPadding()),
+                            .fillMaxWidth()
+                            .heightIn(min = ButtonDefaults.MediumContainerHeight),
                         contentPadding = ButtonDefaults.MediumContentPadding
                     ) {
                         Row(
@@ -388,6 +396,53 @@ fun MainViewContent(
                                 "Play versus",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+                    val context = LocalContext.current
+                    val matchNotificationManager = remember(context) { MatchNotificationManager(context) }
+                    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.RequestPermission()
+                    ) { isGranted ->
+                        if (isGranted) {
+                            matchNotificationManager.startNotification("Opponent")
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                if (ContextCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.POST_NOTIFICATIONS
+                                    ) == PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    matchNotificationManager.startNotification("Opponent")
+                                } else {
+                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                            } else {
+                                matchNotificationManager.startNotification("Opponent")
+                            }
+                        },
+                        shapes = ButtonDefaults.shapes(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = ButtonDefaults.MediumContainerHeight)
+                            .padding(bottom = innerPadding.calculateBottomPadding()),
+                        contentPadding = ButtonDefaults.MediumContentPadding
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Timer,
+                                contentDescription = "Notification icon"
+                            )
+                            Text(
+                                "Start match notification",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
