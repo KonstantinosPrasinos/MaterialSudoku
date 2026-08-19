@@ -47,17 +47,6 @@ fun ActionButtons(
                 contentDescription = "",
             )
         }
-        FilledTonalIconButton(
-            onClick = { generateHint() },
-            shapes = IconButtonDefaults.shapes(),
-            modifier = Modifier.weight(1f),
-            enabled = canGenerateHint
-        ) {
-            Icon(
-                imageVector = Icons.Default.Lightbulb,
-                contentDescription = ""
-            )
-        }
         FilledTonalIconToggleButton(
             checked = isWritingNotes,
             onCheckedChange = { toggleEditing() },
@@ -66,6 +55,17 @@ fun ActionButtons(
         ) {
             Icon(
                 imageVector = Icons.Default.Edit,
+                contentDescription = ""
+            )
+        }
+        FilledTonalIconButton(
+            onClick = { generateHint() },
+            shapes = IconButtonDefaults.shapes(),
+            modifier = Modifier.weight(1f),
+            enabled = canGenerateHint
+        ) {
+            Icon(
+                imageVector = Icons.Default.Lightbulb,
                 contentDescription = ""
             )
         }
