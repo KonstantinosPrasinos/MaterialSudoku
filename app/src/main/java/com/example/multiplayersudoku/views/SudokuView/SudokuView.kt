@@ -341,7 +341,7 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?
                 }
             }
 
-            if (viewModel.showGameEndDialog) {
+            if (viewModel.showGameEndDialog && viewModel.userHasWon) {
                 LottieComposeAnimation(
                     modifier = Modifier
                         .fillMaxWidth()
