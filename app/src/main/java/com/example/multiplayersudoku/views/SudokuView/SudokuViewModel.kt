@@ -153,6 +153,8 @@ class SudokuViewModel @Inject constructor(
                         board = roomData?.opponentBoard!!,
                         solution = roomData?.canonBoard ?: emptyList()
                     )
+                } else if (opponent?.id == userId && sudokuBoard.solution.isEmpty() && !updatedRoom?.canonBoard.isNullOrEmpty()) {
+                    sudokuBoard = sudokuBoard.copy(solution = updatedRoom!!.canonBoard!!)
                 }
 
                 if (roomData?.winnerPath != null && !showGameEndDialog) {
@@ -623,11 +625,13 @@ class SudokuViewModel @Inject constructor(
                 continue
             }
 
-            newBoard[row][col] = tileToUpdate.copy(value = i)
+            val testBoard = sudokuBoard.copyBoard().map { it.toMutableList() }.toMutableList()
+            testBoard[row][col] = tileToUpdate.copy(value = i)
 
-            val solvedBoard = attemptSolve(newBoard)
+            val solvedBoard = attemptSolve(testBoard)
 
             if (solvedBoard.isSolved) {
+                newBoard[row][col] = tileToUpdate.copy(value = i, isMistake = false)
                 sudokuBoard = sudokuBoard.copy(
                     board = newBoard.map { it }
                 )
