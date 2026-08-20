@@ -12,7 +12,7 @@
 }
 
 -keep class com.example.multiplayersudoku.classes.** { *; }
--keep class Player { *; }
+-keep class com.example.multiplayersudoku.classes.Player { *; }
 
 # Preserve Enums for valueOf() serialization (RoomState, Difficulty)
 -keepclassmembers enum com.example.multiplayersudoku.classes.** {

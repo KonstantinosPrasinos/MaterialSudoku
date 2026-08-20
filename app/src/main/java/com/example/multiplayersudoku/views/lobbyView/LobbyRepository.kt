@@ -1,6 +1,6 @@
 package com.example.multiplayersudoku.views.lobbyView
 
-import Player
+import com.example.multiplayersudoku.classes.Player
 import com.example.multiplayersudoku.classes.GameSettings
 import com.example.multiplayersudoku.classes.RoomData
 import com.example.multiplayersudoku.classes.RoomState

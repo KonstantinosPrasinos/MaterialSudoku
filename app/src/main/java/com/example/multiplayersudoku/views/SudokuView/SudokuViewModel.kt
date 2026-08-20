@@ -1,6 +1,6 @@
 package com.example.multiplayersudoku.views.SudokuView
 
-import Player
+import com.example.multiplayersudoku.classes.Player
 import android.content.ContentValues.TAG
 import android.util.Log
 import androidx.compose.runtime.getValue

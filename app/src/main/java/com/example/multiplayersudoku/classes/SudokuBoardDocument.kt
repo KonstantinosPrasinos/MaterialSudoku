@@ -1,3 +1,5 @@
+import com.example.multiplayersudoku.classes.Player
+
 enum class GameStatus(val value: String) {
     WAITING("waiting"),
     IN_PROGRESS("in_progress"),

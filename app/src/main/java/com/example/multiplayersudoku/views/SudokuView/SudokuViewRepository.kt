@@ -1,6 +1,6 @@
 package com.example.multiplayersudoku.views.SudokuView
 
-import Player
+import com.example.multiplayersudoku.classes.Player
 import com.example.multiplayersudoku.classes.RoomData
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError

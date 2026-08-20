@@ -1,6 +1,6 @@
 package com.example.multiplayersudoku.views.lobbyView
 
-import Player
+import com.example.multiplayersudoku.classes.Player
 import android.content.ContentValues.TAG
 import android.util.Log
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -162,7 +162,7 @@ class LobbyViewModel @Inject constructor(
                         startButtonText = "Opponent not ready"
                     }
                 }
-                if (roomData?.roomState == RoomState.PLAYING) {
+                if (roomData?.roomState == RoomState.PLAYING && !isOwner) {
                     onNavigateToSudoku.invoke(roomData?.gameSettings!!, roomData?.roomCode!!)
                 }
             }
