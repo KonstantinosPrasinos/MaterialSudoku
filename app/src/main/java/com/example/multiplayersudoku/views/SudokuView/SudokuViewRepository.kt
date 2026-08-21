@@ -11,6 +11,7 @@ import com.google.firebase.database.Transaction
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -75,6 +76,22 @@ class SudokuViewRepository @Inject constructor(
         }
         rtdb.child("rooms").child(roomCode).addValueEventListener(listener)
         awaitClose { rtdb.child("rooms").child(roomCode).removeEventListener(listener) }
+    }
+
+    fun observeConnectionState(): Flow<Boolean> = callbackFlow {
+        val connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected")
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val isConnected = snapshot.getValue(Boolean::class.java) ?: false
+                trySend(isConnected)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        connectedRef.addValueEventListener(listener)
+        awaitClose { connectedRef.removeEventListener(listener) }
     }
 
     suspend fun getPlayerData(userId: String): Player? {

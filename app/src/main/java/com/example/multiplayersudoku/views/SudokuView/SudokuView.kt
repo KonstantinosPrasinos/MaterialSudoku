@@ -1,7 +1,6 @@
 package com.example.multiplayersudoku.views.SudokuView
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,12 +41,19 @@ import com.example.multiplayersudoku.R
 import com.example.multiplayersudoku.classes.Difficulty
 import com.example.multiplayersudoku.classes.GameSettings
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.SignalWifiConnectedNoInternet4
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
@@ -244,6 +250,32 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?
                         .padding(horizontal = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    val connectionRowOpacity = animateFloatAsState(
+                        targetValue = if (viewModel.isConnected && viewModel.opponentIsConnected) 0f else 1f,
+                        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+                        label = "ExpressiveRowOpacity"
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer { this.alpha = connectionRowOpacity.value },
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        val text = if (viewModel.isConnected) {
+                            "You are disconnected. Forfeit in 0:${viewModel.userConnectionRemainingSeconds}"
+                        } else {
+                            "Opponent disconnected. Auto win in 0:${viewModel.userConnectionRemainingSeconds}"
+                        }
+
+                        Icon(
+                            imageVector = Icons.Default.SignalWifiConnectedNoInternet4,
+                            contentDescription = "Disconnected icon"
+                        )
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.labelLargeEmphasized,
+                        )
+                    }
                     InfoBar(
                         hints = viewModel.hints,
                         mistakes = viewModel.mistakes,
@@ -330,7 +362,6 @@ fun SudokuView(onBack: () -> Unit, gameSettings: GameSettings, roomCode: String?
                         Button(
                             onClick = {
                                 viewModel.updateShowGameEndDialogState(false)
-                                onBack()
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {

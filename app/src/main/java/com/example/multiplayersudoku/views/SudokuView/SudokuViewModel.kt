@@ -29,12 +29,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel
 class SudokuViewModel @Inject constructor(
     private val statisticsRepository: StatisticsRepository,
     private val repository: SudokuViewRepository
 ) : ViewModel() {
+    private val maxDisconnectedSeconds = 30
+
     private lateinit var gameSettings: GameSettings
     private lateinit var hapticFeedback: HapticFeedback
 
@@ -99,6 +102,19 @@ class SudokuViewModel @Inject constructor(
     var isMultiplayer: Boolean by mutableStateOf(false)
         private set
 
+    var isConnected by mutableStateOf(true)
+        private set
+
+    var opponentIsConnected by mutableStateOf(true)
+        private set
+
+    var opponentConnectionRemainingSeconds by mutableIntStateOf(this.maxDisconnectedSeconds)
+        private set
+    var userConnectionRemainingSeconds by mutableIntStateOf(this.maxDisconnectedSeconds)
+        private set
+
+    private var countdownJob: Job? = null
+
     private var timerJob: Job? = null
     private var isInitialized = false
 
@@ -125,6 +141,7 @@ class SudokuViewModel @Inject constructor(
         }
 
         listenToRoomChanges()
+        listenToConnectionState()
     }
 
     private fun initializeMultiplayerAsOpponent() {
@@ -137,6 +154,48 @@ class SudokuViewModel @Inject constructor(
         }
 
         listenToRoomChanges()
+        listenToConnectionState()
+    }
+
+    private fun startUserConnectionCountdown(onFinished: () -> Unit = {}) {
+        // Cancel any previous running instance
+        cancelUserConnectionCountdown()
+
+        userConnectionRemainingSeconds = 30
+
+        countdownJob = viewModelScope.launch {
+            for (i in 30 downTo 0) {
+                userConnectionRemainingSeconds = i
+                if (i > 0) {
+                    delay(1000.milliseconds)
+                }
+            }
+            onFinished()
+        }
+    }
+
+    fun cancelUserConnectionCountdown() {
+        countdownJob?.cancel()
+        countdownJob = null
+    }
+
+    private fun handleUserConnectionStateUpdate(connected: Boolean) {
+        if (connected == isConnected) return
+
+        if (connected) {
+            cancelUserConnectionCountdown()
+        } else {
+            this.userConnectionRemainingSeconds = maxDisconnectedSeconds
+            startUserConnectionCountdown()
+        }
+
+        isConnected = connected
+    }
+
+    fun listenToConnectionState() {
+        viewModelScope.launch {
+            repository.observeConnectionState().collect { connected -> handleUserConnectionStateUpdate(connected)}
+        }
     }
 
     fun listenToRoomChanges() {

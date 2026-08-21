@@ -31,6 +31,7 @@ fun InfoBar(
     hints: Int = 1,
     maxMistakes: Int = GameSettings.maxMistakes,
     maxHints: Int = GameSettings.maxHints,
+    isConnected: Boolean = true
 ) {
     val mistakeShapes = remember(maxMistakes) {
         List(maxMistakes) { getRandomShape() }
